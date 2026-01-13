@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 const { logActivity } = require('./activities');
+const nodemailer = require('nodemailer');
 
 const supabaseUrl = process.env.SUPABASE_URL || 'https://svyrkggjjkbxsbvumfxj.supabase.co';
 const supabaseServiceKey =
@@ -15,6 +16,58 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     autoRefreshToken: false,
   },
 });
+
+// Create email transporter (same logic as auth.js)
+const createEmailTransporter = () => {
+  const connectionOptions = {
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 5000,
+  };
+
+  if (process.env.EMAIL_SERVICE === 'gmail' || process.env.EMAIL_USER?.includes('@gmail.com')) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      ...connectionOptions,
+      pool: true,
+      maxConnections: 1,
+    });
+  }
+
+  if (process.env.EMAIL_SERVICE === 'sendgrid' || process.env.SENDGRID_API_KEY) {
+    return nodemailer.createTransport({
+      host: 'smtp.sendgrid.net',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'apikey',
+        pass: process.env.SENDGRID_API_KEY,
+      },
+      ...connectionOptions,
+    });
+  }
+
+  if (process.env.SMTP_HOST) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+      ...connectionOptions,
+    });
+  }
+
+  return null;
+};
+
+const emailTransporter = createEmailTransporter();
 
 const normalizeStatus = (status) => {
   if (!status) return 'pending';
@@ -257,6 +310,179 @@ router.post('/', async (req, res) => {
     updateUserTotals(userId, totalsDelta).catch((err) =>
       console.error('User total update error:', err),
     );
+
+    // Send order confirmation email (non-blocking)
+    if (resolvedCustomerEmail) {
+      setImmediate(async () => {
+        try {
+          // Get user name for email
+          let userName = resolvedCustomerName || 'Customer';
+          if (userName === 'Guest User') {
+            userName = resolvedFirstName || resolvedLastName || 'Customer';
+          }
+
+          // Format currency
+          const formatCurrency = (value) => {
+            const num = Number(value) || 0;
+            return `PKR ${num.toLocaleString('en-PK', { minimumFractionDigits: 0 })}`;
+          };
+
+          // Build order items HTML
+          const orderItemsHtml = orderItems.map((item, index) => {
+            const itemTotal = (Number(item.price) || 0) * (Number(item.quantity) || 0);
+            return `
+              <tr style="border-bottom: 1px solid #6b7280;">
+                <td style="padding: 12px; text-align: left; color: #e5e7eb;">${index + 1}</td>
+                <td style="padding: 12px; text-align: left; color: #e5e7eb;">${item.name || 'Product'}</td>
+                <td style="padding: 12px; text-align: center; color: #e5e7eb;">${item.quantity || 1}</td>
+                <td style="padding: 12px; text-align: right; color: #e5e7eb;">${formatCurrency(item.price)}</td>
+                <td style="padding: 12px; text-align: right; font-weight: 600; color: #f9fafb;">${formatCurrency(itemTotal)}</td>
+              </tr>
+            `;
+          }).join('');
+
+          const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@hitechcomputers.com';
+          
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #1f2937;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: #374151; padding: 40px; border-radius: 8px;">
+                <!-- Logo -->
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <img src="${process.env.WEBSITE_URL || 'https://www.hitekcomputers.com'}/navbar-logo.png" alt="Hi-Tek Computers" style="max-width: 200px; height: auto;" />
+                </div>
+
+                <!-- Greeting -->
+                <p style="font-size: 16px; color: #f3f4f6; line-height: 1.6; margin-bottom: 20px;">
+                  Dear ${userName},
+                </p>
+
+                <!-- Confirmation Message -->
+                <p style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 30px;">
+                  This is a confirmation email to inform you that we have successfully received your order. We are processing your order and will keep you updated on its status.
+                </p>
+
+                <!-- Order Details -->
+                <div style="background-color: #4b5563; border: 1px solid #6b7280; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                  <h2 style="font-size: 18px; color: #f9fafb; margin-top: 0; margin-bottom: 20px;">Order Details</h2>
+                  
+                  <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <thead>
+                      <tr style="background-color: #1f2937;">
+                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280;">#</th>
+                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280;">Product</th>
+                        <th style="padding: 12px; text-align: center; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280;">Quantity</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280;">Price</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280;">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${orderItemsHtml}
+                    </tbody>
+                  </table>
+
+                  <div style="border-top: 2px solid #6b7280; padding-top: 15px; margin-top: 15px;">
+                    <table style="width: 100%;">
+                      <tr>
+                        <td style="padding: 8px 12px; text-align: right; color: #d1d5db;">Subtotal:</td>
+                        <td style="padding: 8px 12px; text-align: right; font-weight: 600; color: #f9fafb;">${formatCurrency(totals.subtotal || 0)}</td>
+                      </tr>
+                      ${totals.tax ? `
+                      <tr>
+                        <td style="padding: 8px 12px; text-align: right; color: #d1d5db;">Tax:</td>
+                        <td style="padding: 8px 12px; text-align: right; font-weight: 600; color: #f9fafb;">${formatCurrency(totals.tax)}</td>
+                      </tr>
+                      ` : ''}
+                      ${totals.shipping ? `
+                      <tr>
+                        <td style="padding: 8px 12px; text-align: right; color: #d1d5db;">Shipping:</td>
+                        <td style="padding: 8px 12px; text-align: right; font-weight: 600; color: #f9fafb;">${formatCurrency(totals.shipping)}</td>
+                      </tr>
+                      ` : ''}
+                      <tr>
+                        <td style="padding: 12px; text-align: right; font-size: 18px; font-weight: 700; color: #f9fafb; border-top: 2px solid #6b7280;">Total:</td>
+                        <td style="padding: 12px; text-align: right; font-size: 18px; font-weight: 700; color: #00aeef; border-top: 2px solid #6b7280;">${formatCurrency(totals.total || 0)}</td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <p style="margin-top: 20px; margin-bottom: 0; font-size: 14px; color: #d1d5db;">
+                    <strong style="color: #f9fafb;">Order ID:</strong> #${order.id}
+                  </p>
+                </div>
+
+                <!-- Contact Information -->
+                <p style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 10px;">
+                  If you have any queries, please call us at:
+                </p>
+                <p style="font-size: 16px; color: #00aeef; font-weight: 600; margin-bottom: 30px;">
+                  +92 21 32430225
+                </p>
+
+                <!-- Closing -->
+                <p style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 10px;">
+                  Regards,<br />
+                  Team Hi-Tek Computers
+                </p>
+              </div>
+            </body>
+            </html>
+          `;
+
+          const emailText = `
+Dear ${userName},
+
+This is a confirmation email to inform you that we have successfully received your order. We are processing your order and will keep you updated on its status.
+
+ORDER DETAILS
+Order ID: #${order.id}
+
+Items:
+${orderItems.map((item, index) => `${index + 1}. ${item.name || 'Product'} - Quantity: ${item.quantity || 1} - Price: ${formatCurrency(item.price)}`).join('\n')}
+
+Subtotal: ${formatCurrency(totals.subtotal || 0)}
+${totals.tax ? `Tax: ${formatCurrency(totals.tax)}\n` : ''}${totals.shipping ? `Shipping: ${formatCurrency(totals.shipping)}\n` : ''}Total: ${formatCurrency(totals.total || 0)}
+
+If you have any queries, please call us at: +92 21 32430225
+
+Regards,
+Team Hi-Tek Computers
+          `.trim();
+
+          if (emailTransporter) {
+            await Promise.race([
+              emailTransporter.sendMail({
+                from: fromEmail,
+                to: resolvedCustomerEmail,
+                subject: `Order Confirmation - Order #${order.id}`,
+                html: emailHtml,
+                text: emailText,
+              }),
+              new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Email sending timeout')), 5000)
+              )
+            ]);
+            console.log('✅ Order confirmation email sent successfully to:', resolvedCustomerEmail);
+          } else {
+            console.log('='.repeat(50));
+            console.log('📧 ORDER CONFIRMATION EMAIL (Email not configured)');
+            console.log('='.repeat(50));
+            console.log(`To: ${resolvedCustomerEmail}`);
+            console.log(`Subject: Order Confirmation - Order #${order.id}`);
+            console.log(`\n${emailText}`);
+            console.log('='.repeat(50));
+          }
+        } catch (emailError) {
+          console.error('❌ Failed to send order confirmation email:', emailError);
+          // Don't block order creation if email fails
+        }
+      });
+    }
 
     res.json({ order, items: orderItems });
   } catch (error) {
