@@ -89,7 +89,7 @@ const BulkAddScannersPage = () => {
       formData.append('cmsUserName', String(cmsUser.username || cmsUser.user_name || ''));
       formData.append('cmsUserRole', String(cmsUser.role || ''));
 
-      const response = await fetch('https://hitek-server.onrender.com/api/scanners/bulk/csv', {
+      const response = await fetch('https://hitek-server-uu0f.onrender.com/api/scanners/bulk/csv', {
         method: 'POST',
         headers: {
           'X-CMS-User-Id': cmsUser.id || '',

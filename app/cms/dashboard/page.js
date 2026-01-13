@@ -121,7 +121,7 @@ const CmsDashboardPage = () => {
 
   const fetchActivities = async () => {
     try {
-      const response = await fetch('https://hitek-server.onrender.com/api/cms/activities?limit=3');
+      const response = await fetch('https://hitek-server-uu0f.onrender.com/api/cms/activities?limit=3');
       
       if (!response.ok) {
         console.error('Failed to fetch activities');

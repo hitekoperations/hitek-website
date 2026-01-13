@@ -247,9 +247,9 @@ const CmsProductsPage = () => {
         setLoading(true);
         setError('');
         const [laptopsRes, printersRes, scannersRes] = await Promise.all([
-          fetch('https://hitek-server.onrender.com/api/laptops'),
-          fetch('https://hitek-server.onrender.com/api/printers'),
-          fetch('https://hitek-server.onrender.com/api/scanners'),
+          fetch('https://hitek-server-uu0f.onrender.com/api/laptops'),
+          fetch('https://hitek-server-uu0f.onrender.com/api/printers'),
+          fetch('https://hitek-server-uu0f.onrender.com/api/scanners'),
         ]);
 
         if (!laptopsRes.ok) throw new Error('Failed to load laptops');
@@ -367,7 +367,7 @@ const CmsProductsPage = () => {
       } else {
         endpoint = 'laptops';
       }
-      const response = await fetch(`https://hitek-server.onrender.com/api/${endpoint}/${product.id}`);
+      const response = await fetch(`https://hitek-server-uu0f.onrender.com/api/${endpoint}/${product.id}`);
       if (!response.ok) {
         throw new Error('Failed to load product details.');
       }
@@ -583,7 +583,7 @@ const CmsProductsPage = () => {
       } else {
         categorySlug = 'laptop';
       }
-      const response = await fetch(`https://hitek-server.onrender.com/api/products/${categorySlug}/${editTarget.id}`, {
+      const response = await fetch(`https://hitek-server-uu0f.onrender.com/api/products/${categorySlug}/${editTarget.id}`, {
         method: 'PATCH',
         headers: {
           'X-CMS-User-Id': String(cmsUser.id || ''),

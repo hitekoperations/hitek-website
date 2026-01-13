@@ -7,7 +7,7 @@ Add these to your Render dashboard (Environment Variables section) or your `.env
 ```env
 GOOGLE_CLIENT_ID=your_client_id_here
 GOOGLE_CLIENT_SECRET=your_client_secret_here
-GOOGLE_REDIRECT_URI=https://hitek-server.onrender.com/api/auth/google/callback
+GOOGLE_REDIRECT_URI=https://hitek-server-uu0f.onrender.com/api/auth/google/callback
 FRONTEND_URL=https://your-frontend-domain.com
 ```
 
@@ -27,12 +27,12 @@ FRONTEND_URL=https://your-frontend-domain.com
      - These are where the OAuth request originates from (the browser)
      - `https://hitek.vercel.app` (your frontend - no trailing slash!)
      - `http://localhost:3000` (local development - no trailing slash!)
-     - ❌ **DO NOT** add your backend domain here (e.g., `https://hitek-server.onrender.com`)
-     - Wrong: `https://hitek-server.onrender.com/` ❌
-     - Wrong: `https://hitek-server.onrender.com/api/auth/google/callback` ❌
+     - ❌ **DO NOT** add your backend domain here (e.g., `https://hitek-server-uu0f.onrender.com`)
+     - Wrong: `https://hitek-server-uu0f.onrender.com/` ❌
+     - Wrong: `https://hitek-server-uu0f.onrender.com/api/auth/google/callback` ❌
    - **Authorized redirect URIs**:
      - ✅ This CAN have a path
-     - `https://hitek-server.onrender.com/api/auth/google/callback`
+     - `https://hitek-server-uu0f.onrender.com/api/auth/google/callback`
      - `http://localhost:3001/api/auth/google/callback` (local development)
 7. Click **Create**
 8. **Copy the Client ID and Client Secret**
@@ -45,7 +45,7 @@ FRONTEND_URL=https://your-frontend-domain.com
 4. Add each variable:
    - `GOOGLE_CLIENT_ID` = (paste your Client ID)
    - `GOOGLE_CLIENT_SECRET` = (paste your Client Secret)
-   - `GOOGLE_REDIRECT_URI` = `https://hitek-server.onrender.com/api/auth/google/callback`
+   - `GOOGLE_REDIRECT_URI` = `https://hitek-server-uu0f.onrender.com/api/auth/google/callback`
    - `FRONTEND_URL` = (your frontend URL, e.g., `https://your-domain.com`)
 
 ### 3. Restart Your Server
@@ -63,9 +63,9 @@ After adding environment variables, restart your Render service for changes to t
 
 - **"Invalid Origin: URIs must not contain a path or end with '/'."**: 
   - Authorized JavaScript origins must be base domain only (no path, no trailing slash)
-  - Example: `https://hitek-server.onrender.com` ✅
-  - Wrong: `https://hitek-server.onrender.com/` ❌
-  - Wrong: `https://hitek-server.onrender.com/api/auth/google/callback` ❌
+  - Example: `https://hitek-server-uu0f.onrender.com` ✅
+  - Wrong: `https://hitek-server-uu0f.onrender.com/` ❌
+  - Wrong: `https://hitek-server-uu0f.onrender.com/api/auth/google/callback` ❌
 - **"redirect_uri_mismatch"**: Make sure the redirect URI in Google Console exactly matches `GOOGLE_REDIRECT_URI`
 - **"invalid_client"**: Check that `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are correct
 - **CORS errors**: Make sure your frontend URL is added to Authorized JavaScript origins (base domain only, no path)

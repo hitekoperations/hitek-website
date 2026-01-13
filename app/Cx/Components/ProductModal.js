@@ -188,7 +188,7 @@ const ProductModal = ({ isOpen, onClose, product }) => {
         setLoadingProduct(true);
         setProductError('');
         const endpoint = resolvedType === 'printer' ? 'printers' : 'laptops';
-        const response = await fetch(`https://hitek-server.onrender.com/api/${endpoint}/${productIdentifier}`);
+        const response = await fetch(`https://hitek-server-uu0f.onrender.com/api/${endpoint}/${productIdentifier}`);
         if (!response.ok) {
           throw new Error('Failed to load product details');
         }

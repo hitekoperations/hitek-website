@@ -69,7 +69,7 @@ const CmsSettingsPage = () => {
     try {
       setLoading(true);
       setError('');
-      const response = await fetch('https://hitek-server.onrender.com/api/cms/users', {
+      const response = await fetch('https://hitek-server-uu0f.onrender.com/api/cms/users', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ const CmsSettingsPage = () => {
     }
 
     try {
-      const response = await fetch(`https://hitek-server.onrender.com/api/cms/users/${userId}`, {
+      const response = await fetch(`https://hitek-server-uu0f.onrender.com/api/cms/users/${userId}`, {
         method: 'DELETE',
       });
 
@@ -201,8 +201,8 @@ const CmsSettingsPage = () => {
       }
 
       const url = showEditModal
-        ? `https://hitek-server.onrender.com/api/cms/users/${editingUser.id}`
-        : 'https://hitek-server.onrender.com/api/cms/users';
+        ? `https://hitek-server-uu0f.onrender.com/api/cms/users/${editingUser.id}`
+        : 'https://hitek-server-uu0f.onrender.com/api/cms/users';
 
       const method = showEditModal ? 'PUT' : 'POST';
 

@@ -348,7 +348,7 @@ const ProfilePage = () => {
           return;
         }
 
-        const response = await fetch(`https://hitek-server.onrender.com/api/users/${userId}`);
+        const response = await fetch(`https://hitek-server-uu0f.onrender.com/api/users/${userId}`);
         if (!response.ok) {
           throw new Error('Failed to load user profile');
         }
@@ -356,7 +356,7 @@ const ProfilePage = () => {
 
         let cards = [];
         try {
-          const cardsResponse = await fetch(`https://hitek-server.onrender.com/api/users/${userId}/cards`);
+          const cardsResponse = await fetch(`https://hitek-server-uu0f.onrender.com/api/users/${userId}/cards`);
           if (!cardsResponse.ok) {
             throw new Error('Failed to load saved cards');
           }
@@ -389,7 +389,7 @@ const ProfilePage = () => {
       setOrdersLoading(true);
       setOrdersError('');
       try {
-        const response = await fetch(`https://hitek-server.onrender.com/api/orders?userId=${userInfo.id}`);
+        const response = await fetch(`https://hitek-server-uu0f.onrender.com/api/orders?userId=${userInfo.id}`);
         if (!response.ok) {
           throw new Error('Failed to load orders');
         }
@@ -667,8 +667,8 @@ const handleCardFormSubmit = async (event) => {
     const method = cardFormMode === 'edit' ? 'PUT' : 'POST';
     const endpoint =
       cardFormMode === 'edit'
-        ? `https://hitek-server.onrender.com/api/users/${userInfo.id}/cards/${cardForm.id}`
-        : `https://hitek-server.onrender.com/api/users/${userInfo.id}/cards`;
+        ? `https://hitek-server-uu0f.onrender.com/api/users/${userInfo.id}/cards/${cardForm.id}`
+        : `https://hitek-server-uu0f.onrender.com/api/users/${userInfo.id}/cards`;
 
     const response = await fetch(endpoint, {
       method,
@@ -714,7 +714,7 @@ const handleCardFormSubmit = async (event) => {
     setActiveTab('Order Details');
 
     try {
-    const response = await fetch(`https://hitek-server.onrender.com/api/orders/${orderId}`);
+    const response = await fetch(`https://hitek-server-uu0f.onrender.com/api/orders/${orderId}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Unable to find this order.');
@@ -769,7 +769,7 @@ const handleCardFormSubmit = async (event) => {
         setCardFormMessage('');
         setCardFormError('');
         try {
-          const response = await fetch(`https://hitek-server.onrender.com/api/users/${userInfo.id}/cards/${card.id}`, {
+          const response = await fetch(`https://hitek-server-uu0f.onrender.com/api/users/${userInfo.id}/cards/${card.id}`, {
             method: 'DELETE',
           });
           const payload = await response.json().catch(() => ({}));

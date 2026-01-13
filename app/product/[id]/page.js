@@ -130,9 +130,9 @@ const ProductPage = () => {
       try {
         let endpointType = initialType;
         const buildUrl = (type) => {
-          if (type === 'printer') return `https://hitek-server.onrender.com/api/printers/${productId}`;
-          if (type === 'scanner') return `https://hitek-server.onrender.com/api/scanners/${productId}`;
-          return `https://hitek-server.onrender.com/api/laptops/${productId}`;
+          if (type === 'printer') return `https://hitek-server-uu0f.onrender.com/api/printers/${productId}`;
+          if (type === 'scanner') return `https://hitek-server-uu0f.onrender.com/api/scanners/${productId}`;
+          return `https://hitek-server-uu0f.onrender.com/api/laptops/${productId}`;
         };
 
         let response = await fetch(buildUrl(endpointType));

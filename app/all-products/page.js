@@ -268,7 +268,7 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
 
       try {
         const sortParam = resolveSortParam(sortBy);
-        const url = new URL('https://hitek-server.onrender.com/api/products');
+        const url = new URL('https://hitek-server-uu0f.onrender.com/api/products');
         if (sortParam) {
           url.searchParams.set('sort', sortParam);
         }

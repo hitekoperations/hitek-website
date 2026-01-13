@@ -47,7 +47,7 @@ const Laptop = () => {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch('https://hitek-server.onrender.com/api/laptops');
+        const response = await fetch('https://hitek-server-uu0f.onrender.com/api/laptops');
         if (!response.ok) {
           throw new Error('Failed to load laptops');
         }

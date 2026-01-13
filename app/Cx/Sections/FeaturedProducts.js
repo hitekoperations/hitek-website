@@ -165,7 +165,7 @@ const FeaturedProductCard = ({ product, onPreview, onAddToCart }) => {
   );
 };
 
-const API_BASE = 'https://hitek-server.onrender.com';
+const API_BASE = 'https://hitek-server-uu0f.onrender.com';
 
 const FeaturedProducts = () => {
   const [activeTab, setActiveTab] = useState('All Product');

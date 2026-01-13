@@ -59,7 +59,7 @@ const CmsRecentActivityPage = () => {
       setLoading(true);
       setError('');
       
-      const response = await fetch('https://hitek-server.onrender.com/api/cms/activities');
+      const response = await fetch('https://hitek-server-uu0f.onrender.com/api/cms/activities');
       
       if (!response.ok) {
         throw new Error(`Failed to fetch activities: ${response.statusText}`);

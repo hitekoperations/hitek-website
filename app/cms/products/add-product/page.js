@@ -269,7 +269,7 @@ const CmsAddProductPage = () => {
         role: cmsUser.role
       });
       
-      const response = await fetch('https://hitek-server.onrender.com/api/products', {
+      const response = await fetch('https://hitek-server-uu0f.onrender.com/api/products', {
         method: 'POST',
         headers: {
           'X-CMS-User-Id': String(cmsUser.id || ''),

@@ -133,7 +133,7 @@ const SignInPage = () => {
 
       // Try backend API login
       try {
-        const response = await fetch('https://hitek-server.onrender.com/api/auth/login', {
+        const response = await fetch('https://hitek-server-uu0f.onrender.com/api/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -222,7 +222,7 @@ const SignInPage = () => {
       // Send OTP
       let response;
       try {
-        response = await fetch('https://hitek-server.onrender.com/api/auth/send-otp', {
+        response = await fetch('https://hitek-server-uu0f.onrender.com/api/auth/send-otp', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -292,7 +292,7 @@ const SignInPage = () => {
       // Verify OTP
       let response;
       try {
-        response = await fetch('https://hitek-server.onrender.com/api/auth/verify-otp', {
+        response = await fetch('https://hitek-server-uu0f.onrender.com/api/auth/verify-otp', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -353,7 +353,7 @@ const SignInPage = () => {
       // Call backend API for registration
       let response;
       try {
-        response = await fetch('https://hitek-server.onrender.com/api/auth/register', {
+        response = await fetch('https://hitek-server-uu0f.onrender.com/api/auth/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -477,7 +477,7 @@ const SignInPage = () => {
       // Call backend API to update user with shipping details
       let response;
       try {
-        response = await fetch(`https://hitek-server.onrender.com/api/users/${userId}/shipping`, {
+        response = await fetch(`https://hitek-server-uu0f.onrender.com/api/users/${userId}/shipping`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -534,7 +534,7 @@ const SignInPage = () => {
 
   const handleGoogleLogin = () => {
     // Redirect to backend Google OAuth endpoint
-    window.location.href = 'https://hitek-server.onrender.com/api/auth/google';
+    window.location.href = 'https://hitek-server-uu0f.onrender.com/api/auth/google';
   };
 
   return (

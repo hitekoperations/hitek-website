@@ -124,7 +124,7 @@ const Navbar = () => {
 
     setIsSearching(true);
     try {
-      const url = new URL('https://hitek-server.onrender.com/api/products');
+      const url = new URL('https://hitek-server-uu0f.onrender.com/api/products');
       // Map category names to API category values
       if (selectedCategory === 'Laptops' || selectedCategory === 'Refurbished Laptops') {
         url.searchParams.set('category', 'laptop');
@@ -313,7 +313,7 @@ const Navbar = () => {
         setFeaturedLoading(true);
         setFeaturedError('');
 
-        const response = await fetch('https://hitek-server.onrender.com/api/laptops?featured=true&limit=3', {
+        const response = await fetch('https://hitek-server-uu0f.onrender.com/api/laptops?featured=true&limit=3', {
           cache: 'no-store',
         });
         if (!response.ok) {
@@ -361,7 +361,7 @@ const Navbar = () => {
         setPrintersLoading(true);
         setPrintersError('');
 
-        const response = await fetch('https://hitek-server.onrender.com/api/printers?featured=true&limit=3', {
+        const response = await fetch('https://hitek-server-uu0f.onrender.com/api/printers?featured=true&limit=3', {
           cache: 'no-store',
         });
         if (!response.ok) {
@@ -406,7 +406,7 @@ const Navbar = () => {
   useEffect(() => {
     const fetchBannerProduct = async () => {
       try {
-        const response = await fetch('https://hitek-server.onrender.com/api/laptops/12', {
+        const response = await fetch('https://hitek-server-uu0f.onrender.com/api/laptops/12', {
           cache: 'no-store',
         });
         if (!response.ok) {

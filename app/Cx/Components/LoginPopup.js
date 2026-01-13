@@ -29,7 +29,7 @@ const LoginPopup = ({ isOpen, onClose }) => {
       try {
         let response;
         try {
-          response = await fetch('https://hitek-server.onrender.com/api/auth/login', {
+          response = await fetch('https://hitek-server-uu0f.onrender.com/api/auth/login', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

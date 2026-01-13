@@ -69,7 +69,7 @@ const CmsCustomersPage = () => {
       try {
         setLoading(true);
         setError('');
-        const response = await fetch('https://hitek-server.onrender.com/api/users');
+        const response = await fetch('https://hitek-server-uu0f.onrender.com/api/users');
         if (!response.ok) throw new Error('Failed to load customers');
         const data = await response.json();
         const normalized = Array.isArray(data)
@@ -120,7 +120,7 @@ const CmsCustomersPage = () => {
     setUserOrders([]);
 
     try {
-      const response = await fetch(`https://hitek-server.onrender.com/api/orders?userId=${user.id}`);
+      const response = await fetch(`https://hitek-server-uu0f.onrender.com/api/orders?userId=${user.id}`);
       if (!response.ok) throw new Error('Failed to load orders');
       const data = await response.json();
       const orders = Array.isArray(data) ? data : [];

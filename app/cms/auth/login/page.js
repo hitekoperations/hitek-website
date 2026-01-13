@@ -40,7 +40,7 @@ const CmsLoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://hitek-server.onrender.com/api/cms/login', {
+      const response = await fetch('https://hitek-server-uu0f.onrender.com/api/cms/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

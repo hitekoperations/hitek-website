@@ -34,7 +34,7 @@ const OrderConfirmationContent = () => {
 
       const fetchOrder = async () => {
         try {
-          const response = await fetch(`https://hitek-server.onrender.com/api/orders/${parsedId}`);
+          const response = await fetch(`https://hitek-server-uu0f.onrender.com/api/orders/${parsedId}`);
           if (!response.ok) throw new Error('Order not found');
           const data = await response.json();
           setOrderInfo({

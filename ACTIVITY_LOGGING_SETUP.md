@@ -143,7 +143,7 @@ When making API calls from CMS pages, include user headers:
 ```javascript
 const cmsUser = JSON.parse(window.localStorage.getItem('cmsUser') || '{}');
 
-const response = await fetch('https://hitek-server.onrender.com/api/products', {
+const response = await fetch('https://hitek-server-uu0f.onrender.com/api/products', {
   method: 'POST',
   headers: {
     'X-CMS-User-Id': cmsUser.id || '',
