@@ -3,6 +3,7 @@ const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 const { logActivity } = require('./activities');
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const supabaseUrl = process.env.SUPABASE_URL || 'https://svyrkggjjkbxsbvumfxj.supabase.co';
 const supabaseServiceKey =
@@ -17,13 +18,36 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   },
 });
 
+// Initialize Resend if API key is available
+let resendClient = null;
+if (process.env.RESEND_API_KEY) {
+  resendClient = new Resend(process.env.RESEND_API_KEY);
+  console.log('✅ Resend email client initialized');
+}
+
 // Create email transporter (same logic as auth.js)
 const createEmailTransporter = () => {
   const connectionOptions = {
-    connectionTimeout: 10000, // Increased timeout for Gmail
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
+    connectionTimeout: 30000, // 30 seconds for cloud platforms
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+    secure: true, // Use TLS
+    requireTLS: true,
+    tls: {
+      rejectUnauthorized: false, // Some cloud platforms need this
+    },
   };
+
+  // Check for Resend first (best for cloud platforms, no SMTP blocking issues)
+  if (process.env.EMAIL_SERVICE === 'resend' || process.env.RESEND_API_KEY) {
+    if (!process.env.RESEND_API_KEY) {
+      console.log('⚠️  Resend email configuration incomplete:');
+      console.log('   RESEND_API_KEY:', process.env.RESEND_API_KEY ? '✅ Set' : '❌ Missing');
+      return null;
+    }
+    // Return a special marker object to indicate Resend should be used
+    return { useResend: true };
+  }
 
   // Check for Gmail configuration
   if (process.env.EMAIL_SERVICE === 'gmail' || process.env.EMAIL_USER?.includes('@gmail.com')) {
@@ -37,15 +61,17 @@ const createEmailTransporter = () => {
     console.log('✅ Gmail email transporter configured');
     console.log('   Using Gmail account:', process.env.EMAIL_USER);
     
+    // Try Gmail SMTP with explicit host/port (more reliable on cloud platforms)
     return nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD, // Should be Gmail App Password
       },
       ...connectionOptions,
-      pool: true,
-      maxConnections: 1,
+      pool: false, // Disable pooling for better reliability
     });
   }
 
@@ -81,12 +107,16 @@ const createEmailTransporter = () => {
 const emailTransporter = createEmailTransporter();
 
 // Log email configuration status
-if (emailTransporter) {
+if (emailTransporter?.useResend) {
+  console.log('✅ Resend email service configured');
+} else if (emailTransporter) {
   console.log('✅ Email transporter initialized successfully');
 } else {
   console.log('⚠️  Email transporter not configured - emails will be logged to console');
-  console.log('   For Gmail: Set EMAIL_USER and EMAIL_PASSWORD (use App Password, not regular password)');
+  console.log('   For Resend: Set EMAIL_SERVICE=resend and RESEND_API_KEY');
+  console.log('   For Gmail: Set EMAIL_SERVICE=gmail, EMAIL_USER and EMAIL_PASSWORD (use App Password)');
   console.log('   Current EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'not set');
+  console.log('   Current RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'set' : 'not set');
   console.log('   Current EMAIL_USER:', process.env.EMAIL_USER ? 'set' : 'not set');
   console.log('   Current EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'set' : 'not set');
 }
@@ -483,33 +513,79 @@ Team Hi-Tek Computers
             console.log('   Subject: Order Confirmation - Order #' + order.id);
             
             try {
-              const emailResult = await Promise.race([
-                emailTransporter.sendMail({
-                  from: fromEmail,
+              // Use Resend if configured (better for cloud platforms)
+              if (emailTransporter.useResend && resendClient) {
+                console.log('   Using Resend API...');
+                const emailResult = await resendClient.emails.send({
+                  from: fromEmail || process.env.EMAIL_FROM || 'noreply@hitechcomputers.com',
                   to: resolvedCustomerEmail,
                   subject: `Order Confirmation - Order #${order.id}`,
                   html: emailHtml,
                   text: emailText,
-                }),
-                new Promise((_, reject) =>
-                  setTimeout(() => reject(new Error('Email sending timeout')), 15000)
-                )
-              ]);
-              
-              console.log('✅ Order confirmation email sent successfully!');
-              console.log('   Message ID:', emailResult.messageId);
-              console.log('   Response:', emailResult.response);
-            } catch (sendError) {
-              console.error('❌ Email sending error:', sendError.message);
-              console.error('   Error code:', sendError.code);
-              if (sendError.code === 'EAUTH') {
-                console.error('   ⚠️  Authentication failed. Make sure:');
-                console.error('      1. EMAIL_USER is your full Gmail address');
-                console.error('      2. EMAIL_PASSWORD is a Gmail App Password (not your regular password)');
-                console.error('      3. 2-Step Verification is enabled on your Gmail account');
-                console.error('      4. App Password is generated from: https://myaccount.google.com/apppasswords');
+                });
+                
+                console.log('✅ Order confirmation email sent successfully via Resend!');
+                console.log('   Email ID:', emailResult.data?.id);
+              } else {
+                // Use SMTP (Gmail, SendGrid, etc.)
+                // Retry logic for email sending (up to 3 retries)
+                let lastError = null;
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                  try {
+                    console.log(`   Attempt ${attempt} of 3...`);
+                    const emailResult = await Promise.race([
+                      emailTransporter.sendMail({
+                        from: fromEmail,
+                        to: resolvedCustomerEmail,
+                        subject: `Order Confirmation - Order #${order.id}`,
+                        html: emailHtml,
+                        text: emailText,
+                      }),
+                      new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Email sending timeout')), 30000)
+                      )
+                    ]);
+                    
+                    console.log('✅ Order confirmation email sent successfully!');
+                    console.log('   Message ID:', emailResult.messageId);
+                    console.log('   Response:', emailResult.response);
+                    break; // Success, exit retry loop
+                  } catch (attemptError) {
+                    lastError = attemptError;
+                    console.error(`❌ Attempt ${attempt} failed:`, attemptError.message);
+                    console.error('   Error code:', attemptError.code);
+                    
+                    if (attemptError.code === 'EAUTH') {
+                      console.error('   ⚠️  Authentication failed. Make sure:');
+                      console.error('      1. EMAIL_USER is your full Gmail address');
+                      console.error('      2. EMAIL_PASSWORD is a Gmail App Password (not your regular password)');
+                      console.error('      3. 2-Step Verification is enabled on your Gmail account');
+                      console.error('      4. App Password is generated from: https://myaccount.google.com/apppasswords');
+                      break; // Don't retry auth errors
+                    }
+                    
+                    if (attempt < 3) {
+                      const waitTime = attempt * 2000; // 2s, 4s delays
+                      console.log(`   Retrying in ${waitTime/1000} seconds...`);
+                      await new Promise(resolve => setTimeout(resolve, waitTime));
+                    }
+                  }
+                }
+                
+                if (lastError && lastError.code !== 'EAUTH') {
+                  throw lastError;
+                }
               }
-              throw sendError;
+            } catch (sendError) {
+              console.error('❌ Failed to send order confirmation email:', sendError.message);
+              if (sendError.message) {
+                console.error('   Error details:', sendError.message);
+              }
+              if (sendError.code === 'ETIMEDOUT' || sendError.code === 'ECONNREFUSED') {
+                console.error('   ⚠️  Connection timeout/refused. This often happens on cloud platforms like Render.');
+                console.error('   💡 Solution: Use Resend (set EMAIL_SERVICE=resend and RESEND_API_KEY)');
+              }
+              // Don't throw - order should still succeed even if email fails
             }
           } else {
             console.log('='.repeat(50));
