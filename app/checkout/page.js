@@ -162,6 +162,129 @@ const CheckoutPage = () => {
     setStatusMessage('');
   };
 
+  // Helper function to find or create user for guest checkout
+  const findOrCreateUser = async () => {
+    // First check if user is logged in
+    if (typeof window !== 'undefined') {
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      if (storedUser?.id) {
+        return storedUser.id;
+      }
+    }
+
+    // If not logged in and no email provided, we can't create a user
+    if (!billingInfo.email) {
+      throw new Error('Email is required to place an order.');
+    }
+
+    try {
+      // Check if user exists by email
+      const usersResponse = await fetch('https://hitek-server-uu0f.onrender.com/api/users');
+      if (!usersResponse.ok) {
+        throw new Error('Failed to check existing users.');
+      }
+
+      const allUsers = await usersResponse.json();
+      const normalizedEmail = billingInfo.email.trim().toLowerCase();
+      const existingUser = Array.isArray(allUsers) 
+        ? allUsers.find(u => u.email && u.email.trim().toLowerCase() === normalizedEmail)
+        : null;
+
+      let userId;
+      if (existingUser) {
+        userId = existingUser.id;
+      } else {
+        // User doesn't exist, create one using registration endpoint
+        // Generate a random password (user can reset it later if they want to log in)
+        const randomPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
+        
+        const registerResponse = await fetch('https://hitek-server-uu0f.onrender.com/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: billingInfo.email.trim(),
+            password: randomPassword,
+            first_name: billingInfo.firstName?.trim() || '',
+            last_name: billingInfo.lastName?.trim() || '',
+            skipOTP: true, // Skip OTP for guest checkout
+          }),
+        });
+
+        if (!registerResponse.ok) {
+          const errorData = await registerResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to create user account.');
+        }
+
+        const registerData = await registerResponse.json();
+        userId = registerData.user?.id || registerData.userData?.id;
+      }
+
+      // Update user with address and phone information (for both new and existing users)
+      if (userId) {
+        try {
+          // Prepare address data - map checkout form fields to database columns
+          // Only include fields that have actual values
+          const addressData = {};
+          
+          if (billingInfo.phone && billingInfo.phone.trim()) {
+            addressData.phone = billingInfo.phone.trim();
+          }
+          if (billingInfo.address && billingInfo.address.trim()) {
+            addressData.address = billingInfo.address.trim();
+            addressData.shipment_address = billingInfo.address.trim();
+          }
+          if (billingInfo.region && billingInfo.region.trim()) {
+            addressData.province = billingInfo.region.trim();
+          }
+          if (billingInfo.city && billingInfo.city.trim()) {
+            addressData.city = billingInfo.city.trim();
+          }
+
+          // Only update if we have fields to update
+          if (Object.keys(addressData).length > 0) {
+            // Update user with address information using PUT endpoint
+            console.log('Updating user with address data:', addressData);
+            const updateResponse = await fetch(`https://hitek-server-uu0f.onrender.com/api/users/${userId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(addressData),
+            });
+
+            if (!updateResponse.ok) {
+              const errorText = await updateResponse.text().catch(() => '');
+              console.error('Failed to update user address information:', errorText);
+              console.error('Status:', updateResponse.status);
+            } else {
+              const updatedData = await updateResponse.json().catch(() => null);
+              console.log('User updated successfully:', updatedData);
+            }
+          }
+
+          // Fetch updated user data and store in localStorage so profile page can access it
+          try {
+            const userResponse = await fetch(`https://hitek-server-uu0f.onrender.com/api/users/${userId}`);
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('user', JSON.stringify(userData));
+              }
+            }
+          } catch (fetchError) {
+            console.warn('Failed to fetch updated user data for localStorage:', fetchError);
+          }
+        } catch (updateError) {
+          console.warn('Error updating user address:', updateError);
+          // Continue with order even if update fails
+        }
+      }
+
+      return userId;
+    } catch (error) {
+      console.error('Error finding/creating user:', error);
+      throw error;
+    }
+  };
+
   const handlePlaceOrder = async (event) => {
     event.preventDefault();
 
@@ -175,15 +298,19 @@ const CheckoutPage = () => {
       return;
     }
 
+    if (!billingInfo.email) {
+      setStatusMessage('Email is required to place an order.');
+      return;
+    }
+
     setOrderPlacing(true);
     setStatusMessage('');
 
     try {
-      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!storedUser?.id) {
-        setStatusMessage('Please sign in before placing an order.');
-        setOrderPlacing(false);
-        return;
+      // Find or create user (for both logged in and guest users)
+      const userId = await findOrCreateUser();
+      if (!userId) {
+        throw new Error('Failed to get user ID for order.');
       }
 
       const fullName = `${billingInfo.firstName} ${billingInfo.lastName}`.trim();
@@ -218,7 +345,7 @@ const CheckoutPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: storedUser.id,
+          userId: userId,
           status: paymentMethod === 'cod' ? 'pending' : 'in_progress',
           totals: {
             subtotal: cartSubtotal,
@@ -405,8 +532,7 @@ const CheckoutPage = () => {
                     >
                       <option value="">Select...</option>
                       <option value="PK">Pakistan</option>
-                      <option value="US">United States</option>
-                      <option value="CA">Canada</option>
+                      
                     </select>
                   </div>
                   <div>
