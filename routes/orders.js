@@ -367,31 +367,43 @@ router.post('/', async (req, res) => {
     if (resolvedCustomerEmail) {
       setImmediate(async () => {
         try {
-          // Check if this is a guest order
-          const isGuestOrder = resolvedCustomerName === 'Guest User';
-          
           // Get user name for email
           let userName = resolvedCustomerName || 'Customer';
           if (userName === 'Guest User') {
             userName = resolvedFirstName || resolvedLastName || 'Customer';
           }
           
-          // Fetch user password for guest orders
+          // Fetch user password for guest orders (users created recently, likely from guest checkout)
+          // Check if user was created within the last 10 minutes (guest checkout creates account just before order)
           let userPassword = null;
-          if (isGuestOrder) {
-            try {
-              const { data: userData, error: userError } = await supabase
-                .from('users')
-                .select('password')
-                .eq('id', userId)
-                .single();
+          try {
+            const { data: userData, error: userError } = await supabase
+              .from('users')
+              .select('password, created_at, id')
+              .eq('id', userId)
+              .single();
+            
+            if (!userError && userData && userData.password) {
+              // Check if user was created recently (within last 10 minutes) - likely a guest checkout
+              const userCreatedAt = userData.created_at ? new Date(userData.created_at) : null;
+              const now = new Date();
+              const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
               
-              if (!userError && userData && userData.password) {
+              // If user was created within last 10 minutes, send credentials
+              // Also send if created_at is null (older users table might not have this field)
+              if (!userCreatedAt || userCreatedAt >= tenMinutesAgo) {
                 userPassword = userData.password;
+                console.log('📧 Guest order detected - will send login credentials');
+                console.log('   User created at:', userCreatedAt || 'unknown');
+              } else {
+                console.log('📧 Existing user order - credentials not sent');
+                console.log('   User created at:', userCreatedAt);
               }
-            } catch (error) {
-              console.error('Error fetching user password:', error);
+            } else if (userError) {
+              console.error('Error fetching user data:', userError);
             }
+          } catch (error) {
+            console.error('Error fetching user password:', error);
           }
 
           // Format currency

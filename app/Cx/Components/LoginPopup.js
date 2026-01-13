@@ -6,7 +6,7 @@ import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa6';
 import { openSans } from '../Font/font';
 import { supabase } from '../../lib/supabase';
 
-const LoginPopup = ({ isOpen, onClose }) => {
+const LoginPopup = ({ isOpen, onClose, onMouseEnter, onMouseLeave }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -199,13 +199,11 @@ const LoginPopup = ({ isOpen, onClose }) => {
       className={`absolute top-full right-0 mt-2 w-96 bg-white rounded-sm shadow-2xl z-50 border border-gray-200 ${openSans.className}`}
       onMouseEnter={(e) => {
         e.stopPropagation();
-        // Keep popup open when hovering over it
+        if (onMouseEnter) onMouseEnter();
       }}
       onMouseLeave={(e) => {
-        // Only close if not moving to parent or bridge
-        if (!e.currentTarget.contains(e.relatedTarget)) {
-          onClose();
-        }
+        e.stopPropagation();
+        if (onMouseLeave) onMouseLeave();
       }}
     >
       <div className="p-6">

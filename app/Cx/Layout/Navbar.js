@@ -43,6 +43,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCartHovered, setIsCartHovered] = useState(false);
   const [isProfileHovered, setIsProfileHovered] = useState(false);
+  const profileHoverTimeoutRef = useRef(null);
   const [isAllProductsHovered, setIsAllProductsHovered] = useState(false);
   const [isLaptopsHovered, setIsLaptopsHovered] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState('All');
@@ -706,8 +707,19 @@ const Navbar = () => {
             <CiHeart className="text-2xl cursor-pointer hover:text-gray-300 transition" />
             <div 
               className="relative"
-              onMouseEnter={() => setIsProfileHovered(true)}
-              onMouseLeave={() => setIsProfileHovered(false)}
+              onMouseEnter={() => {
+                if (profileHoverTimeoutRef.current) {
+                  clearTimeout(profileHoverTimeoutRef.current);
+                  profileHoverTimeoutRef.current = null;
+                }
+                setIsProfileHovered(true);
+              }}
+              onMouseLeave={() => {
+                // Add delay before closing to allow interaction with browser autofill dropdown
+                profileHoverTimeoutRef.current = setTimeout(() => {
+                  setIsProfileHovered(false);
+                }, 1000);
+              }}
             >
               {currentUser ? (
                 <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-sm font-semibold cursor-pointer hover:bg-white/20 transition">
@@ -720,7 +732,13 @@ const Navbar = () => {
                 <>
                   <div 
                     className="absolute top-full right-0 w-full h-2 pointer-events-auto z-40"
-                    onMouseEnter={() => setIsProfileHovered(true)}
+                    onMouseEnter={() => {
+                      if (profileHoverTimeoutRef.current) {
+                        clearTimeout(profileHoverTimeoutRef.current);
+                        profileHoverTimeoutRef.current = null;
+                      }
+                      setIsProfileHovered(true);
+                    }}
                   />
                   {currentUser ? (
                     <div
@@ -743,7 +761,19 @@ const Navbar = () => {
                   ) : (
                     <LoginPopup 
                       isOpen={isProfileHovered} 
-                      onClose={() => setIsProfileHovered(false)} 
+                      onClose={() => setIsProfileHovered(false)}
+                      onMouseEnter={() => {
+                        if (profileHoverTimeoutRef.current) {
+                          clearTimeout(profileHoverTimeoutRef.current);
+                          profileHoverTimeoutRef.current = null;
+                        }
+                        setIsProfileHovered(true);
+                      }}
+                      onMouseLeave={() => {
+                        profileHoverTimeoutRef.current = setTimeout(() => {
+                          setIsProfileHovered(false);
+                        }, 1000);
+                      }}
                     />
                   )}
                 </>
