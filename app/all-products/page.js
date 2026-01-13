@@ -67,6 +67,7 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
   const [fetchError, setFetchError] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewProduct, setPreviewProduct] = useState(null);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const { addToCart } = useCart();
 
   const FEATURED_BANNER_PRODUCT_ID = '12';
@@ -708,9 +709,9 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
       {/* Main Content */}
       <div className="flex-1 bg-white">
         {/* Breadcrumbs */}
-        <div className="bg-gray-100 border-b border-gray-200 py-5">
+        <div className="bg-gray-100 border-b border-gray-200 py-4 md:py-5">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center px-4 gap-2 text-sm text-gray-600">
+            <div className="flex items-center px-2 md:px-4 gap-2 text-xs md:text-sm text-gray-600">
               <Link href="/" className="hover:text-[#00aeef] transition">Home</Link>
               <span>/</span>
               <span className="text-gray-900 font-medium">{pageTitle}</span>
@@ -718,10 +719,10 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-8 py-6">
-          <div className="flex gap-6">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Filters */}
-            <div className="w-64 shrink-0 space-y-4 sticky top-4 h-fit">
+            <div className="hidden lg:block w-64 shrink-0 space-y-4 sticky top-4 h-fit">
               {/* Category */}
               {showCategoryFilter && categories.length > 0 && (
                 <div className="bg-white rounded-sm border border-gray-200 shadow-lg p-4">
@@ -921,19 +922,190 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
             </div>
 
             {/* Right Side - Main Content */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col w-full">
+              {/* Mobile Filter Button */}
+              <button
+                onClick={() => setMobileFiltersOpen(true)}
+                className="lg:hidden mb-4 w-full bg-[#00aeef] text-white px-4 py-3 rounded-sm font-semibold flex items-center justify-center gap-2"
+              >
+                <span>Filters</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+              </button>
+
+              {/* Mobile Filter Modal */}
+              {mobileFiltersOpen && (
+                <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setMobileFiltersOpen(false)}>
+                  <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+                      <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+                      <button
+                        onClick={() => setMobileFiltersOpen(false)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <FaTimes className="text-xl" />
+                      </button>
+                    </div>
+                    <div className="p-4 space-y-4">
+                      {/* Category */}
+                      {showCategoryFilter && categories.length > 0 && (
+                        <div className="bg-white rounded-sm border border-gray-200 shadow-lg p-4">
+                          <h3 className="text-sm font-bold text-gray-900 mb-3">CATEGORY</h3>
+                          <div className="space-y-2">
+                            {categories.map((category) => (
+                              <label key={category} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="category-mobile"
+                                  value={category}
+                                  checked={selectedCategory === category}
+                                  onChange={(e) => {
+                                    setSelectedCategory(e.target.value);
+                                    setMobileFiltersOpen(false);
+                                  }}
+                                  className="w-4 h-4 text-[#00aeef] focus:ring-[#00aeef]"
+                                />
+                                <span className="text-sm text-gray-700">{category}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Price Range */}
+                      <div className="bg-white rounded-sm border border-gray-200 shadow-lg p-4">
+                        <h3 className="text-sm font-bold text-gray-900 mb-3">PRICE RANGE</h3>
+                        <div className="space-y-4">
+                          <div className="px-2">
+                            <div className="relative h-8">
+                              <div className="absolute w-full h-2 bg-gray-200 rounded-sm top-3"></div>
+                              <div
+                                className="absolute h-2 bg-[#00aeef] rounded-sm top-3"
+                                style={{
+                                  left: `${(priceRange.min / PRICE_MAX) * 100}%`,
+                                  width: `${((priceRange.max - priceRange.min) / PRICE_MAX) * 100}%`
+                                }}
+                              ></div>
+                              <input
+                                type="range"
+                                min={PRICE_MIN}
+                                max={PRICE_MAX}
+                                step="10000"
+                                value={priceRange.min}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  if (Number.isFinite(val)) {
+                                    setCustomPriceRange({ min: val });
+                                  }
+                                }}
+                                className="absolute top-0 w-full h-8 opacity-0 cursor-pointer z-20"
+                              />
+                              <input
+                                type="range"
+                                min={PRICE_MIN}
+                                max={PRICE_MAX}
+                                step="10000"
+                                value={priceRange.max}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  if (Number.isFinite(val)) {
+                                    setCustomPriceRange({ max: val });
+                                  }
+                                }}
+                                className="absolute top-0 w-full h-8 opacity-0 cursor-pointer z-30"
+                              />
+                              <div 
+                                className="absolute top-2 w-4 h-4 bg-[#00aeef] rounded-full border-2 border-white shadow pointer-events-none"
+                                style={{ left: `calc(${(priceRange.min / PRICE_MAX) * 100}% - 8px)` }}
+                              ></div>
+                              <div 
+                                className="absolute top-2 w-4 h-4 bg-[#00aeef] rounded-full border-2 border-white shadow pointer-events-none"
+                                style={{ left: `calc(${(priceRange.max / PRICE_MAX) * 100}% - 8px)` }}
+                              ></div>
+                            </div>
+                            <div className="flex items-center justify-between mt-4 text-xs text-gray-600">
+                              <span>PKR {(priceRange.min / 1000).toFixed(0)}K</span>
+                              <span>PKR {(priceRange.max / 1000).toFixed(0)}K</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={priceRange.min}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                setCustomPriceRange({ min: Number.isFinite(val) ? val : PRICE_MIN });
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                              placeholder="Min price"
+                            />
+                            <input
+                              type="number"
+                              value={priceRange.max}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                setCustomPriceRange({ max: Number.isFinite(val) ? val : PRICE_MAX });
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                              placeholder="Max price"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            {priceRanges.map((range) => (
+                              <label key={range.value} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="priceRange-mobile"
+                                  value={range.value}
+                                  checked={selectedPriceRange === range.value}
+                                  onChange={(e) => {
+                                    setSelectedPriceRange(e.target.value);
+                                    setMobileFiltersOpen(false);
+                                  }}
+                                  className="w-4 h-4 text-[#00aeef] focus:ring-[#00aeef]"
+                                />
+                                <span className="text-sm text-gray-700">{range.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Popular Brands */}
+                      <div className="bg-white rounded-sm border border-gray-200 shadow-lg p-4">
+                        <h3 className="text-sm font-bold text-gray-900 mb-3">POPULAR BRANDS</h3>
+                        <div className="space-y-2">
+                          {brands.map((brand) => (
+                            <label key={brand} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedBrands.includes(brand.trim())}
+                                onChange={() => handleBrandToggle(brand)}
+                                className="w-4 h-4 text-[#00aeef] focus:ring-[#00aeef] rounded"
+                              />
+                              <span className="text-sm text-gray-700">{brand}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Search and Filters Bar */}
               <div className="bg-white rounded-sm p-4 mb-4">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   {/* Search */}
-                  <div className="flex-1 max-w-md">
+                  <div className="flex-1 w-full md:max-w-md">
                     <div className="flex rounded overflow-hidden border border-gray-300">
                       <input
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search for anything..."
-                        className="flex-1 px-4 py-2 text-gray-900 bg-white focus:outline-none"
+                        className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 bg-white focus:outline-none"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
@@ -980,12 +1152,12 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
                   </div>
 
                   {/* Sort */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-700">Sort by:</span>
+                  <div className="flex items-center gap-2 w-full md:w-auto">
+                    <span className="text-sm text-gray-700 whitespace-nowrap">Sort by:</span>
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="px-4 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#00aeef]"
+                      className="flex-1 md:flex-none px-3 md:px-4 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#00aeef]"
                     >
                       <option value="">Select sorting option</option>
                       <option>Price: Low to High</option>
@@ -1027,7 +1199,7 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
             
 
               {/* Product Grid */}
-              <div className="pl-4 mb-6">
+              <div className="pl-0 md:pl-4 mb-6">
                 {loadingProducts ? (
                   <div className="py-12 text-sm text-gray-600 text-center">Loading products...</div>
                 ) : fetchError ? (
@@ -1061,19 +1233,19 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-center gap-2 mt-auto pt-8">
+              <div className="flex items-center justify-center gap-1 md:gap-2 mt-auto pt-6 md:pt-8 overflow-x-auto pb-2">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-3 rounded-full border-blue-400 border-2 text-blue-400 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-2 md:px-3 py-2 md:py-3 rounded-full border-blue-400 border-2 text-blue-400 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                 >
-                  <FaChevronLeft className="text-sm" />
+                  <FaChevronLeft className="text-xs md:text-sm" />
                 </button>
                 {[1, 2, 3, 4, 5, 6].map((page) => (
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`w-10 h-10 rounded-full transition ${
+                    className={`w-8 h-8 md:w-10 md:h-10 rounded-full transition text-xs md:text-base shrink-0 ${
                       currentPage === page
                         ? 'bg-[#00aeef] text-white'
                         : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
@@ -1085,9 +1257,9 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(6, prev + 1))}
                   disabled={currentPage === 6}
-                  className="px-3 py-3 border-2 border-blue-400 text-blue-400 rounded-full hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-2 md:px-3 py-2 md:py-3 border-2 border-blue-400 text-blue-400 rounded-full hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                 >
-                  <FaChevronRight className="text-sm" />
+                  <FaChevronRight className="text-xs md:text-sm" />
                 </button>
               </div>
             </div>

@@ -14,12 +14,12 @@ const Map = () => {
         
         {/* City Tabs */}
         <div className="flex justify-center mb-6">
-          <div className="w-[70%] mx-auto bg-gray-100 flex">
+          <div className="w-full md:w-[70%] mx-auto bg-gray-100 flex flex-wrap gap-2 p-2 rounded-lg">
             {cities.map((city) => (
               <button
                 key={city}
                 onClick={() => setActiveCity(city)}
-                className={`flex-1 py-3 font-medium transition ${
+                className={`flex-1 min-w-[calc(50%-0.25rem)] md:min-w-0 py-3 px-2 md:px-0 font-medium transition rounded-md ${
                   activeCity === city
                     ? 'bg-[#00aeef] text-white'
                     : 'text-gray-600 hover:text-gray-900'
@@ -32,7 +32,7 @@ const Map = () => {
         </div>
 
         {/* Map */}
-        <div className="w-[70%] mx-auto rounded-lg overflow-hidden shadow-lg">
+        <div className="w-full md:w-[70%] mx-auto rounded-lg overflow-hidden shadow-lg">
           <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3620.4089675097575!2d67.00614997449246!3d24.849874878045682665!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3eb33e064597032d%3A0xec613d47d59822c3!2sHi-tekcomputers!5e0!3m2!1sen!2s!4v1762201001856!5m2!1sen!2s"
             width="100%"

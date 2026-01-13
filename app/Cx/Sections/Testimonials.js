@@ -5,18 +5,18 @@ import { openSans } from '../Font/font';
 const Testimonials = () => {
   const testimonials = [
     {
-      review: "Purchased a Chronos 7000 laptop from Hi-Tek and I'm extremely happy with my purchase! The laptop is fast and reliable, and the screen is great for watching movies. I highly recommend it to anyone looking for a quality laptop.",
-      name: "colinandmandy94",
+      review: "Maine Hi-Tek se ek printer khareeda hai aur print quality ne mujhe kaafi impress kiya hai. Setup bilkul straightforward tha, aur after-sales service exceptional rahi. Support team se Saad bahut hi helpful the. Product quality aur customer care dono ke liye main Hi-Tek ko highly recommend karta hoon.",
+      name: "Shazaib Faraz",
       rating: 5
     },
     {
-      review: "I bought a printer from Hi-Tek and I have been very impressed with the print quality. The setup was straightforward, and the after-sales service has been exceptional. Rohan from the support team was extremely helpful. I highly recommend Hi-Tek for both product quality and customer care!",
-      name: "Jennifer Black",
+      review: "Maine recently apne gaming setup ke liye Hi-Tek se ek LED monitor purchase kiya hai, aur main isse lekar kaafi zyada satisfied hoon. Colors kaafi vibrant hain aur response time excellent hai. Isne meri gaming experience ko kaafi enhance kar diya hai. Quality products aur service ke liye main Hi-Tek ko highly recommend karta hoon.",
+      name: "Ali Murad",
       rating: 5
     },
     {
-      review: "I recently purchased a SpectraView LED monitor from Hi-Tek for my gaming setup, and I'm extremely satisfied! The colors are vibrant and the response time is excellent. It has greatly enhanced my gaming experience. I highly recommend Hi-Tek for their quality products and service!",
-      name: "Phillip Colligan",
+      review: "Maine Hi-Tek se ek naya laptop purchase kiya hai. Laptop fast aur reliable hai, aur screen bhi kaafi achchi hai. Main Hitek ko highly recommend karta hoon jo ek quality laptop aur Service dhoondh raha hai.",
+      name: "Ahad Ayaz",
       rating: 5
     },
     {
