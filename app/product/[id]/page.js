@@ -135,7 +135,11 @@ const ProductPage = () => {
           return `https://hitek-server-uu0f.onrender.com/api/laptops/${productId}`;
         };
 
-        let response = await fetch(buildUrl(endpointType));
+        const url = buildUrl(endpointType);
+        console.log('🔍 Fetching product from:', url);
+        console.log('📡 Server being used: hitek-server-uu0f.onrender.com');
+        
+        let response = await fetch(url);
 
         if (response.status === 404) {
           // Try fallback types
@@ -212,6 +216,7 @@ const ProductPage = () => {
           images,
         };
         setProduct(normalized);
+        console.log('✅ Product loaded successfully from: hitek-server-uu0f.onrender.com');
         if (normalized.type === 'printer' || normalized.type === 'scanner') {
           setSelectedMemory('');
           setSelectedSize('');

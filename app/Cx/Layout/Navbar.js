@@ -1226,7 +1226,7 @@ const Navbar = () => {
             {/* Phone Number */}
             <div className="flex items-center gap-2 px-6 py-4 border-l border-[#00aeef] shrink-0 whitespace-nowrap">
               <CiPhone className="shrink-0" />
-              <span className="font-medium">+92-213-2410225</span>
+              <a href="tel:+922132430225" className="font-medium hover:text-[#00aeef] transition">+92 21 32430225</a>
             </div>
           </div>
         </div>
@@ -1455,7 +1455,7 @@ const Navbar = () => {
               <div className="flex flex-col items-center gap-2 p-3">
                 <CiPhone className="text-2xl text-gray-700" />
                 <span className="text-xs text-gray-700">Call</span>
-                <a href="tel:+922132410225" className="text-xs text-[#00aeef] font-medium">+92-213-2410225</a>
+                <a href="tel:+922132430225" className="text-xs text-[#00aeef] font-medium">+92 21 32430225</a>
               </div>
             </div>
 

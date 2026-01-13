@@ -94,8 +94,8 @@ const ContactUsPage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Phone</h3>
-                    <a href="tel:+923332673177" className="text-gray-600 hover:text-[#00aeef] transition">
-                      +92-333-2673177
+                    <a href="tel:+922132430225" className="text-gray-600 hover:text-[#00aeef] transition">
+                      +92 21 32430225
                     </a>
                   </div>
                 </div>
@@ -121,8 +121,10 @@ const ContactUsPage = () => {
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Address</h3>
                     <p className="text-gray-600">
-                      Hi-Tek Computers<br />
-                      Pakistan
+                      Hi-Tek Computers, Head Office,<br />
+                      Uni Center, Office No. 316, 3rd Floor,<br />
+                      I. I. Chundrigar Road,<br />
+                      Karachi - Pakistan
                     </p>
                   </div>
                 </div>

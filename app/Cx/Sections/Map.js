@@ -34,7 +34,7 @@ const Map = () => {
         {/* Map */}
         <div className="w-full md:w-[70%] mx-auto rounded-lg overflow-hidden shadow-lg">
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3620.4089675097575!2d67.00614997449246!3d24.849874878045682665!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3eb33e064597032d%3A0xec613d47d59822c3!2sHi-tekcomputers!5e0!3m2!1sen!2s!4v1762201001856!5m2!1sen!2s"
+            src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3620.4029089439678!2d67.0045871753706!3d24.850085077936075!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMjTCsDUxJzAwLjMiTiA2N8KwMDAnMjUuOCJF!5e0!3m2!1sen!2s!4v1768316133460!5m2!1sen!2s"
             width="100%"
             height="400"
             style={{ border: 0 }}

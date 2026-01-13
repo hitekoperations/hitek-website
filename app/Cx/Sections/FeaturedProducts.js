@@ -189,6 +189,10 @@ const FeaturedProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        // Verify which server is being used
+        console.log('🔍 API Server URL:', API_BASE);
+        console.log('📡 Fetching from:', `${API_BASE}/api/laptops?limit=8`);
+        
         const [laptopsRes, printersRes] = await Promise.all([
           fetch(`${API_BASE}/api/laptops?limit=8`),
           fetch(`${API_BASE}/api/printers?limit=8`),
@@ -197,6 +201,7 @@ const FeaturedProducts = () => {
         if (laptopsRes.ok) {
           const laptopsJson = await laptopsRes.json();
           setLaptopData(Array.isArray(laptopsJson) ? laptopsJson : []);
+          console.log('✅ Successfully loaded products from:', API_BASE);
         }
 
         if (printersRes.ok) {
@@ -204,7 +209,8 @@ const FeaturedProducts = () => {
           setPrinterData(Array.isArray(printersJson) ? printersJson : []);
         }
       } catch (error) {
-        console.error('Featured products fetch error:', error);
+        console.error('❌ Featured products fetch error:', error);
+        console.error('Failed server URL:', API_BASE);
       }
     };
 
