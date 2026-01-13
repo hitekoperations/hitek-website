@@ -20,17 +20,28 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 // Create email transporter (same logic as auth.js)
 const createEmailTransporter = () => {
   const connectionOptions = {
-    connectionTimeout: 5000,
-    greetingTimeout: 5000,
-    socketTimeout: 5000,
+    connectionTimeout: 10000, // Increased timeout for Gmail
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
   };
 
+  // Check for Gmail configuration
   if (process.env.EMAIL_SERVICE === 'gmail' || process.env.EMAIL_USER?.includes('@gmail.com')) {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log('⚠️  Gmail email configuration incomplete:');
+      console.log('   EMAIL_USER:', process.env.EMAIL_USER ? '✅ Set' : '❌ Missing');
+      console.log('   EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? '✅ Set' : '❌ Missing');
+      return null;
+    }
+    
+    console.log('✅ Gmail email transporter configured');
+    console.log('   Using Gmail account:', process.env.EMAIL_USER);
+    
     return nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
+        pass: process.env.EMAIL_PASSWORD, // Should be Gmail App Password
       },
       ...connectionOptions,
       pool: true,
@@ -68,6 +79,17 @@ const createEmailTransporter = () => {
 };
 
 const emailTransporter = createEmailTransporter();
+
+// Log email configuration status
+if (emailTransporter) {
+  console.log('✅ Email transporter initialized successfully');
+} else {
+  console.log('⚠️  Email transporter not configured - emails will be logged to console');
+  console.log('   For Gmail: Set EMAIL_USER and EMAIL_PASSWORD (use App Password, not regular password)');
+  console.log('   Current EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'not set');
+  console.log('   Current EMAIL_USER:', process.env.EMAIL_USER ? 'set' : 'not set');
+  console.log('   Current EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'set' : 'not set');
+}
 
 const normalizeStatus = (status) => {
   if (!status) return 'pending';
@@ -455,19 +477,40 @@ Team Hi-Tek Computers
           `.trim();
 
           if (emailTransporter) {
-            await Promise.race([
-              emailTransporter.sendMail({
-                from: fromEmail,
-                to: resolvedCustomerEmail,
-                subject: `Order Confirmation - Order #${order.id}`,
-                html: emailHtml,
-                text: emailText,
-              }),
-              new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Email sending timeout')), 5000)
-              )
-            ]);
-            console.log('✅ Order confirmation email sent successfully to:', resolvedCustomerEmail);
+            console.log('📧 Attempting to send order confirmation email...');
+            console.log('   From:', fromEmail);
+            console.log('   To:', resolvedCustomerEmail);
+            console.log('   Subject: Order Confirmation - Order #' + order.id);
+            
+            try {
+              const emailResult = await Promise.race([
+                emailTransporter.sendMail({
+                  from: fromEmail,
+                  to: resolvedCustomerEmail,
+                  subject: `Order Confirmation - Order #${order.id}`,
+                  html: emailHtml,
+                  text: emailText,
+                }),
+                new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error('Email sending timeout')), 15000)
+                )
+              ]);
+              
+              console.log('✅ Order confirmation email sent successfully!');
+              console.log('   Message ID:', emailResult.messageId);
+              console.log('   Response:', emailResult.response);
+            } catch (sendError) {
+              console.error('❌ Email sending error:', sendError.message);
+              console.error('   Error code:', sendError.code);
+              if (sendError.code === 'EAUTH') {
+                console.error('   ⚠️  Authentication failed. Make sure:');
+                console.error('      1. EMAIL_USER is your full Gmail address');
+                console.error('      2. EMAIL_PASSWORD is a Gmail App Password (not your regular password)');
+                console.error('      3. 2-Step Verification is enabled on your Gmail account');
+                console.error('      4. App Password is generated from: https://myaccount.google.com/apppasswords');
+              }
+              throw sendError;
+            }
           } else {
             console.log('='.repeat(50));
             console.log('📧 ORDER CONFIRMATION EMAIL (Email not configured)');
