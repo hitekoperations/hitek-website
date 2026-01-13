@@ -367,10 +367,31 @@ router.post('/', async (req, res) => {
     if (resolvedCustomerEmail) {
       setImmediate(async () => {
         try {
+          // Check if this is a guest order
+          const isGuestOrder = resolvedCustomerName === 'Guest User';
+          
           // Get user name for email
           let userName = resolvedCustomerName || 'Customer';
           if (userName === 'Guest User') {
             userName = resolvedFirstName || resolvedLastName || 'Customer';
+          }
+          
+          // Fetch user password for guest orders
+          let userPassword = null;
+          if (isGuestOrder) {
+            try {
+              const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('password')
+                .eq('id', userId)
+                .single();
+              
+              if (!userError && userData && userData.password) {
+                userPassword = userData.password;
+              }
+            } catch (error) {
+              console.error('Error fetching user password:', error);
+            }
           }
 
           // Format currency
@@ -522,6 +543,29 @@ router.post('/', async (req, res) => {
                             </p>
                           </div>
 
+                          ${userPassword ? `
+                          <!-- Login Credentials for Guest Users -->
+                          <div style="background-color: #4b5563; border: 1px solid #6b7280; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                            <h2 style="font-size: 18px; color: #f9fafb; margin-top: 0; margin-bottom: 15px;">Your Account Login</h2>
+                            <p class="content-text" style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 15px;">
+                              An account has been created for you. Use the following credentials to log in to our website:
+                            </p>
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="width: 100%; margin-top: 15px;">
+                              <tr>
+                                <td style="padding: 10px 0; font-size: 14px; color: #d1d5db; width: 120px;"><strong style="color: #f9fafb;">Email:</strong></td>
+                                <td style="padding: 10px 0; font-size: 14px; color: #e5e7eb; word-break: break-all;">${resolvedCustomerEmail}</td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 10px 0; font-size: 14px; color: #d1d5db;"><strong style="color: #f9fafb;">Password:</strong></td>
+                                <td style="padding: 10px 0; font-size: 14px; color: #e5e7eb; font-family: monospace; word-break: break-all;">${userPassword}</td>
+                              </tr>
+                            </table>
+                            <p class="content-text" style="font-size: 14px; color: #d1d5db; line-height: 1.6; margin-top: 15px; margin-bottom: 0;">
+                              You can change your password after logging in from your account settings.
+                            </p>
+                          </div>
+                          ` : ''}
+
                           <!-- Contact Information -->
                           <p class="content-text" style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 10px;">
                             If you have any queries, please call us at:
@@ -559,6 +603,16 @@ ${orderItems.map((item, index) => `${index + 1}. ${item.name || 'Product'} - Qua
 Subtotal: ${formatCurrency(totals.subtotal || 0)}
 ${totals.tax ? `Tax: ${formatCurrency(totals.tax)}\n` : ''}${totals.shipping ? `Shipping: ${formatCurrency(totals.shipping)}\n` : ''}Total: ${formatCurrency(totals.total || 0)}
 
+${userPassword ? `
+YOUR ACCOUNT LOGIN
+An account has been created for you. Use the following credentials to log in to our website:
+
+Email: ${resolvedCustomerEmail}
+Password: ${userPassword}
+
+You can change your password after logging in from your account settings.
+
+` : ''}
 If you have any queries, please call us at: +92 21 32430225
 
 Regards,
