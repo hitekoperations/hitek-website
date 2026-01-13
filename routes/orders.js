@@ -384,16 +384,17 @@ router.post('/', async (req, res) => {
             const itemTotal = (Number(item.price) || 0) * (Number(item.quantity) || 0);
             return `
               <tr style="border-bottom: 1px solid #6b7280;">
-                <td style="padding: 12px; text-align: left; color: #e5e7eb;">${index + 1}</td>
-                <td style="padding: 12px; text-align: left; color: #e5e7eb;">${item.name || 'Product'}</td>
-                <td style="padding: 12px; text-align: center; color: #e5e7eb;">${item.quantity || 1}</td>
-                <td style="padding: 12px; text-align: right; color: #e5e7eb;">${formatCurrency(item.price)}</td>
-                <td style="padding: 12px; text-align: right; font-weight: 600; color: #f9fafb;">${formatCurrency(itemTotal)}</td>
+                <td class="mobile-hide" style="padding: 12px 8px; text-align: left; color: #e5e7eb; font-size: 14px;">${index + 1}</td>
+                <td style="padding: 12px 8px; text-align: left; color: #e5e7eb; font-size: 14px;">${item.name || 'Product'}</td>
+                <td style="padding: 12px 8px; text-align: center; color: #e5e7eb; font-size: 14px;">${item.quantity || 1}</td>
+                <td class="mobile-hide" style="padding: 12px 8px; text-align: right; color: #e5e7eb; font-size: 14px; white-space: nowrap;">${formatCurrency(item.price)}</td>
+                <td style="padding: 12px 8px; text-align: right; font-weight: 600; color: #f9fafb; font-size: 14px; white-space: nowrap;">${formatCurrency(itemTotal)}</td>
               </tr>
             `;
           }).join('');
 
-          const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@hitechcomputers.com';
+          const fromEmailAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@hitechcomputers.com';
+          const fromEmail = `Order Confirmation - Hi-Tek Computers <${fromEmailAddress}>`;
           
           const emailHtml = `
             <!DOCTYPE html>
@@ -401,87 +402,145 @@ router.post('/', async (req, res) => {
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                @media only screen and (max-width: 600px) {
+                  .email-container {
+                    padding: 20px !important;
+                  }
+                  .logo-img {
+                    max-width: 150px !important;
+                  }
+                  .content-text {
+                    font-size: 14px !important;
+                  }
+                  .order-box {
+                    padding: 15px !important;
+                  }
+                  .order-title {
+                    font-size: 16px !important;
+                  }
+                  .main-heading {
+                    font-size: 20px !important;
+                  }
+                  .order-table {
+                    font-size: 12px !important;
+                  }
+                  .order-table th,
+                  .order-table td {
+                    padding: 8px 4px !important;
+                  }
+                  .order-table .mobile-hide {
+                    display: none !important;
+                  }
+                  .order-table .mobile-full {
+                    display: block !important;
+                    width: 100% !important;
+                  }
+                  .total-amount {
+                    font-size: 16px !important;
+                  }
+                  .contact-phone {
+                    font-size: 14px !important;
+                  }
+                }
+              </style>
             </head>
             <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #1f2937;">
-              <div style="max-width: 600px; margin: 0 auto; background-color: #374151; padding: 40px; border-radius: 8px;">
-                <!-- Logo -->
-                <div style="text-align: center; margin-bottom: 30px;">
-                  <img src="${process.env.WEBSITE_URL || 'https://www.hitekcomputers.com'}/navbar-logo.png" alt="Hi-Tek Computers" style="max-width: 200px; height: auto;" />
-                </div>
-
-                <!-- Greeting -->
-                <p style="font-size: 16px; color: #f3f4f6; line-height: 1.6; margin-bottom: 20px;">
-                  Dear ${userName},
-                </p>
-
-                <!-- Confirmation Message -->
-                <p style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 30px;">
-                  This is a confirmation email to inform you that we have successfully received your order. We are processing your order and will keep you updated on its status.
-                </p>
-
-                <!-- Order Details -->
-                <div style="background-color: #4b5563; border: 1px solid #6b7280; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
-                  <h2 style="font-size: 18px; color: #f9fafb; margin-top: 0; margin-bottom: 20px;">Order Details</h2>
-                  
-                  <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                    <thead>
-                      <tr style="background-color: #1f2937;">
-                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280;">#</th>
-                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280;">Product</th>
-                        <th style="padding: 12px; text-align: center; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280;">Quantity</th>
-                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280;">Price</th>
-                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280;">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${orderItemsHtml}
-                    </tbody>
-                  </table>
-
-                  <div style="border-top: 2px solid #6b7280; padding-top: 15px; margin-top: 15px;">
-                    <table style="width: 100%;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #1f2937;">
+                <tr>
+                  <td style="padding: 20px 10px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #374151; border-radius: 8px;">
                       <tr>
-                        <td style="padding: 8px 12px; text-align: right; color: #d1d5db;">Subtotal:</td>
-                        <td style="padding: 8px 12px; text-align: right; font-weight: 600; color: #f9fafb;">${formatCurrency(totals.subtotal || 0)}</td>
-                      </tr>
-                      ${totals.tax ? `
-                      <tr>
-                        <td style="padding: 8px 12px; text-align: right; color: #d1d5db;">Tax:</td>
-                        <td style="padding: 8px 12px; text-align: right; font-weight: 600; color: #f9fafb;">${formatCurrency(totals.tax)}</td>
-                      </tr>
-                      ` : ''}
-                      ${totals.shipping ? `
-                      <tr>
-                        <td style="padding: 8px 12px; text-align: right; color: #d1d5db;">Shipping:</td>
-                        <td style="padding: 8px 12px; text-align: right; font-weight: 600; color: #f9fafb;">${formatCurrency(totals.shipping)}</td>
-                      </tr>
-                      ` : ''}
-                      <tr>
-                        <td style="padding: 12px; text-align: right; font-size: 18px; font-weight: 700; color: #f9fafb; border-top: 2px solid #6b7280;">Total:</td>
-                        <td style="padding: 12px; text-align: right; font-size: 18px; font-weight: 700; color: #00aeef; border-top: 2px solid #6b7280;">${formatCurrency(totals.total || 0)}</td>
+                        <td class="email-container" style="padding: 40px;">
+                          <!-- Logo -->
+                          <div style="text-align: center; margin-bottom: 20px;">
+                            <img src="${process.env.WEBSITE_URL || 'https://www.hitekcomputers.com'}/navbar-logo.png" alt="Hi-Tek Computers" class="logo-img" style="max-width: 200px; width: 100%; height: auto;" />
+                          </div>
+
+                          <!-- Main Heading -->
+                          <h1 class="main-heading" style="font-size: 24px; color: #f9fafb; text-align: center; margin: 0 0 30px 0; font-weight: 700; line-height: 1.3;">
+                            Order Confirmation - Hi-Tek
+                          </h1>
+
+                          <!-- Greeting -->
+                          <p class="content-text" style="font-size: 16px; color: #f3f4f6; line-height: 1.6; margin-bottom: 20px;">
+                            Dear ${userName},
+                          </p>
+
+                          <!-- Confirmation Message -->
+                          <p class="content-text" style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 30px;">
+                            This is a confirmation email to inform you that we have successfully received your order. We are processing your order and will keep you updated on its status.
+                          </p>
+
+                          <!-- Order Details -->
+                          <div class="order-box" style="background-color: #4b5563; border: 1px solid #6b7280; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                            <h2 class="order-title" style="font-size: 18px; color: #f9fafb; margin-top: 0; margin-bottom: 20px;">Order Details</h2>
+                            
+                            <!-- Desktop Table -->
+                            <table class="order-table" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                              <thead>
+                                <tr style="background-color: #1f2937;">
+                                  <th class="mobile-hide" style="padding: 12px 8px; text-align: left; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280; font-size: 14px;">#</th>
+                                  <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280; font-size: 14px;">Product</th>
+                                  <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280; font-size: 14px;">Qty</th>
+                                  <th class="mobile-hide" style="padding: 12px 8px; text-align: right; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280; font-size: 14px;">Price</th>
+                                  <th style="padding: 12px 8px; text-align: right; font-weight: 600; color: #f9fafb; border-bottom: 2px solid #6b7280; font-size: 14px;">Total</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                ${orderItemsHtml}
+                              </tbody>
+                            </table>
+
+                            <div style="border-top: 2px solid #6b7280; padding-top: 15px; margin-top: 15px;">
+                              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="width: 100%;">
+                                <tr>
+                                  <td style="padding: 8px 12px; text-align: right; color: #d1d5db; font-size: 14px;">Subtotal:</td>
+                                  <td style="padding: 8px 12px; text-align: right; font-weight: 600; color: #f9fafb; font-size: 14px; white-space: nowrap;">${formatCurrency(totals.subtotal || 0)}</td>
+                                </tr>
+                                ${totals.tax ? `
+                                <tr>
+                                  <td style="padding: 8px 12px; text-align: right; color: #d1d5db; font-size: 14px;">Tax:</td>
+                                  <td style="padding: 8px 12px; text-align: right; font-weight: 600; color: #f9fafb; font-size: 14px; white-space: nowrap;">${formatCurrency(totals.tax)}</td>
+                                </tr>
+                                ` : ''}
+                                ${totals.shipping ? `
+                                <tr>
+                                  <td style="padding: 8px 12px; text-align: right; color: #d1d5db; font-size: 14px;">Shipping:</td>
+                                  <td style="padding: 8px 12px; text-align: right; font-weight: 600; color: #f9fafb; font-size: 14px; white-space: nowrap;">${formatCurrency(totals.shipping)}</td>
+                                </tr>
+                                ` : ''}
+                                <tr>
+                                  <td class="total-amount" style="padding: 12px; text-align: right; font-size: 18px; font-weight: 700; color: #f9fafb; border-top: 2px solid #6b7280;">Total:</td>
+                                  <td class="total-amount" style="padding: 12px; text-align: right; font-size: 18px; font-weight: 700; color: #00aeef; border-top: 2px solid #6b7280; white-space: nowrap;">${formatCurrency(totals.total || 0)}</td>
+                                </tr>
+                              </table>
+                            </div>
+
+                            <p style="margin-top: 20px; margin-bottom: 0; font-size: 14px; color: #d1d5db;">
+                              <strong style="color: #f9fafb;">Order ID:</strong> #${order.id}
+                            </p>
+                          </div>
+
+                          <!-- Contact Information -->
+                          <p class="content-text" style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 10px;">
+                            If you have any queries, please call us at:
+                          </p>
+                          <p class="contact-phone" style="font-size: 16px; color: #00aeef; font-weight: 600; margin-bottom: 30px; word-break: break-all;">
+                            <a href="tel:+922132430225" style="color: #00aeef; text-decoration: none;">+92 21 32430225</a>
+                          </p>
+
+                          <!-- Closing -->
+                          <p class="content-text" style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 10px;">
+                            Regards,<br />
+                            Team Hi-Tek Computers
+                          </p>
+                        </td>
                       </tr>
                     </table>
-                  </div>
-
-                  <p style="margin-top: 20px; margin-bottom: 0; font-size: 14px; color: #d1d5db;">
-                    <strong style="color: #f9fafb;">Order ID:</strong> #${order.id}
-                  </p>
-                </div>
-
-                <!-- Contact Information -->
-                <p style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 10px;">
-                  If you have any queries, please call us at:
-                </p>
-                <p style="font-size: 16px; color: #00aeef; font-weight: 600; margin-bottom: 30px;">
-                  +92 21 32430225
-                </p>
-
-                <!-- Closing -->
-                <p style="font-size: 16px; color: #e5e7eb; line-height: 1.6; margin-bottom: 10px;">
-                  Regards,<br />
-                  Team Hi-Tek Computers
-                </p>
-              </div>
+                  </td>
+                </tr>
+              </table>
             </body>
             </html>
           `;
@@ -517,7 +576,7 @@ Team Hi-Tek Computers
               if (emailTransporter.useResend && resendClient) {
                 console.log('   Using Resend API...');
                 const emailResult = await resendClient.emails.send({
-                  from: fromEmail || process.env.EMAIL_FROM || 'noreply@hitechcomputers.com',
+                  from: fromEmail,
                   to: resolvedCustomerEmail,
                   subject: `Order Confirmation - Order #${order.id}`,
                   html: emailHtml,
