@@ -59,6 +59,7 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
   const [selectedBrands, setSelectedBrands] = useState(brandParam ? [brandParam] : []);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState(searchParam);
+  const ITEMS_PER_PAGE = 30;
 
   const brandFromUrlRef = useRef(Boolean(brandParam));
 
@@ -453,6 +454,22 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
       return numericPrice >= minPrice && numericPrice <= maxPrice;
     });
   }, [products, selectedCategory, selectedPriceRange, priceRange, normalizedBrandSelections, searchTerm]);
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  }, [filteredProducts.length]);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredProducts.slice(startIndex, endIndex);
+  }, [filteredProducts, currentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
 
   const featuredBannerProduct = useMemo(() => {
     if (!Array.isArray(products) || !products.length) return null;
@@ -1208,7 +1225,7 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
                   <div className="py-12 text-sm text-gray-600 text-center">No products available yet.</div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {filteredProducts.map((product) => (
+                    {paginatedProducts.map((product) => (
                       <ProductCard
                         key={product.cartId || `${product.type}-${product.id}`}
                         product={product}
@@ -1233,35 +1250,37 @@ export const ProductsPage = ({ searchParams: initialSearchParams = {}, restrictT
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-center gap-1 md:gap-2 mt-auto pt-6 md:pt-8 overflow-x-auto pb-2">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="px-2 md:px-3 py-2 md:py-3 rounded-full border-blue-400 border-2 text-blue-400 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                >
-                  <FaChevronLeft className="text-xs md:text-sm" />
-                </button>
-                {[1, 2, 3, 4, 5, 6].map((page) => (
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-1 md:gap-2 mt-auto pt-6 md:pt-8 overflow-x-auto pb-2">
                   <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-8 h-8 md:w-10 md:h-10 rounded-full transition text-xs md:text-base shrink-0 ${
-                      currentPage === page
-                        ? 'bg-[#00aeef] text-white'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
-                    }`}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-2 md:px-3 py-2 md:py-3 rounded-full border-blue-400 border-2 text-blue-400 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                   >
-                    {String(page).padStart(2, '0')}
+                    <FaChevronLeft className="text-xs md:text-sm" />
                   </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(6, prev + 1))}
-                  disabled={currentPage === 6}
-                  className="px-2 md:px-3 py-2 md:py-3 border-2 border-blue-400 text-blue-400 rounded-full hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                >
-                  <FaChevronRight className="text-xs md:text-sm" />
-                </button>
-              </div>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 md:w-10 md:h-10 rounded-full transition text-xs md:text-base shrink-0 ${
+                        currentPage === page
+                          ? 'bg-[#00aeef] text-white'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {String(page).padStart(2, '0')}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-2 md:px-3 py-2 md:py-3 border-2 border-blue-400 text-blue-400 rounded-full hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  >
+                    <FaChevronRight className="text-xs md:text-sm" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

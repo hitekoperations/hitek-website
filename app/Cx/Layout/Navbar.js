@@ -1482,11 +1482,13 @@ const Navbar = () => {
                 <CiHeart className="text-2xl text-gray-700" />
                 <span className="text-xs text-gray-700">Wishlist</span>
               </button>
-              <div className="flex flex-col items-center gap-2 p-3">
-                <CiPhone className="text-2xl text-gray-700" />
+              <a
+                href="tel:+922132430225"
+                className="flex flex-col items-center gap-2 p-3 hover:bg-gray-100 rounded transition text-center"
+              >
+                <CiPhone className="text-2xl text-[#00aeef]" />
                 <span className="text-xs text-gray-700">Call</span>
-                <a href="tel:+922132430225" className="text-xs text-[#00aeef] font-medium">+92 21 32430225</a>
-              </div>
+              </a>
             </div>
 
             {/* Navigation Links */}

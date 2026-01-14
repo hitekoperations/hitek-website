@@ -31,7 +31,7 @@ const Footer = () => {
               <CiPhone className="text-xl mt-1" />
               <div>
                 <p className="text-gray-300 font-medium">Contact Us</p>
-                <p className="text-white">+92-333-2673177</p>
+                <p className="text-white">+92 21 32430225</p>
               </div>
             </div>
             
@@ -112,16 +112,6 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-700 pt-6 mt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-400 px-20 text-sm">© Hi-Tek Computers 2025. All right reserved</p>
-          
-          <div className="flex items-center pr-20 gap-4">
-            <div className="flex items-center gap-3">
-              <Image src="/easypaisa.png" alt="EasyPaisa" width={20} height={20} className="object-contain" />
-              <Image src="/sadapay.png" alt="SadaPay" width={20} height={20} className="object-contain" />
-              <Image src="/nayapay.png" alt="NayaPay" width={20} height={20} className="object-contain" />
-              <Image src="/mastercard.png" alt="Mastercard" width={20} height={20} className="object-contain" />
-              <Image src="/visa.png" alt="Visa" width={30} height={30} className="object-contain" />
-            </div>
-          </div>
         </div>
       </div>
     </footer>

@@ -659,48 +659,6 @@ const ProductModal = ({ isOpen, onClose, product }) => {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm font-medium text-gray-700 mb-3">
-                    100% Guarantee Safe Checkout
-                  </p>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <Image
-                      src="/visa-black.png"
-                      alt="Visa"
-                      width={50}
-                      height={30}
-                      className="object-contain"
-                    />
-                    <Image
-                      src="/mastercard.png"
-                      alt="Mastercard"
-                      width={30}
-                      height={30}
-                      className="object-contain"
-                    />
-                    <Image
-                      src="/easypaisa.png"
-                      alt="EasyPaisa"
-                      width={20}
-                      height={20}
-                      className="object-contain"
-                    />
-                    <Image
-                      src="/sadapay.png"
-                      alt="SadaPay"
-                      width={20}
-                      height={30}
-                      className="object-contain"
-                    />
-                    <Image
-                      src="/nayapay.png"
-                      alt="NayaPay"
-                      width={25}
-                      height={30}
-                      className="object-contain"
-                    />
-                  </div>
-                </div>
               </div>
             </div>
           </div>

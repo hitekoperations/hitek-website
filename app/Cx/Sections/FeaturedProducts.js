@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
@@ -174,6 +174,8 @@ const FeaturedProducts = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const { addToCart } = useCart();
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const endDateRef = useRef(null);
 
   const parsePrice = (value) => {
     if (value === null || value === undefined) return 0;
@@ -215,6 +217,40 @@ const FeaturedProducts = () => {
     };
 
     fetchProducts();
+  }, []);
+
+  // Countdown timer (1 week from component mount)
+  useEffect(() => {
+    // Set end date to 1 week from now (only once when component mounts)
+    if (!endDateRef.current) {
+      const now = new Date().getTime();
+      endDateRef.current = now + (7 * 24 * 60 * 60 * 1000); // 7 days in milliseconds
+    }
+
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const difference = endDateRef.current - now;
+
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+        return { days, hours, minutes, seconds };
+      }
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    };
+
+    // Set initial time
+    setTimeLeft(calculateTimeLeft());
+
+    // Update every second
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
   const normalizeProduct = (item, type) => {
@@ -301,17 +337,38 @@ const FeaturedProducts = () => {
             <div className="bg-linear-to-b from-blue-900 to-black rounded-lg overflow-hidden h-full">
               <div className="p-6 text-white">
                 <p className="text-xs uppercase tracking-wide mb-2">LAPTOPS & PRINTERS</p>
-                <h2 className="text-3xl font-bold mb-2">50% Discount</h2>
+                <h2 className="text-3xl font-bold mb-2">55% Discount</h2>
                 <p className="text-lg mb-4">On All Products</p>
                 
                 <div className="bg-gray-800 p-3 rounded mb-4">
-                  <p className="text-xs text-center">Offers ends in: DD : HH : MM : SS</p>
+                  <p className="text-xs text-center mb-2">Offers ends in:</p>
+                  <div className="flex items-center justify-center gap-2 text-center">
+                    <div className="flex flex-col items-center">
+                      <span className="text-lg font-bold">{String(timeLeft.days).padStart(2, '0')}</span>
+                      <span className="text-xs text-gray-400">DD</span>
+                    </div>
+                    <span className="text-lg font-bold">:</span>
+                    <div className="flex flex-col items-center">
+                      <span className="text-lg font-bold">{String(timeLeft.hours).padStart(2, '0')}</span>
+                      <span className="text-xs text-gray-400">HH</span>
+                    </div>
+                    <span className="text-lg font-bold">:</span>
+                    <div className="flex flex-col items-center">
+                      <span className="text-lg font-bold">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                      <span className="text-xs text-gray-400">MM</span>
+                    </div>
+                    <span className="text-lg font-bold">:</span>
+                    <div className="flex flex-col items-center">
+                      <span className="text-lg font-bold">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                      <span className="text-xs text-gray-400">SS</span>
+                    </div>
+                  </div>
                 </div>
                 
-                <button className="w-full bg-[#00aeef] hover:bg-[#0099d9] text-white py-3 px-6 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                <Link href="/all-products" className="block w-full bg-[#00aeef] hover:bg-[#0099d9] text-white py-3 px-6 rounded-lg font-semibold transition flex items-center justify-center gap-2">
                   SHOP NOW
                   <FiArrowRight />
-                </button>
+                </Link>
               </div>
               
               <div className="mt-4 overflow-hidden flex justify-center items-end h-112">
