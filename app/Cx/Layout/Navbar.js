@@ -494,7 +494,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="w-full">
+    <nav className="w-full relative z-50">
       {/* Top Bar - Welcome & Social Media */}
       <div className="bg-[#00aeef] text-white py-2 px-8 hidden md:flex items-center justify-between">
         <div className="flex items-center">
@@ -819,9 +819,9 @@ const Navbar = () => {
                       <a href="#" className="block px-4 py-2 text-sm text-gray-900 hover:bg-gray-100 transition cursor-pointer">
                         Desktop PCs
                       </a>
-                      <a href="#" className="block px-4 py-2 text-sm text-gray-900 hover:bg-gray-100 transition cursor-pointer">
+                      <Link href="/printers" className="block px-4 py-2 text-sm text-gray-900 hover:bg-gray-100 transition cursor-pointer">
                         Printers
-                      </a>
+                      </Link>
                       <div 
                         className="relative"
                         onMouseEnter={() => setIsLaptopsHovered(true)}
@@ -1070,7 +1070,7 @@ const Navbar = () => {
                   <span className="text-sm">Laptops</span>
                   <FaChevronDown className="text-xs shrink-0" />
                 </button>
-                <div className="absolute left-0 top-full w-[520px] bg-white text-black shadow-2xl rounded-b-md py-6 px-6 hidden group-hover:block z-40">
+                <div className="absolute left-0 top-full w-[520px] bg-white text-black shadow-2xl rounded-b-md py-6 px-6 hidden group-hover:block z-50">
                   <div className="flex gap-6">
                     <div className="w-40 shrink-0">
                       <div className="space-y-1">
@@ -1161,7 +1161,7 @@ const Navbar = () => {
                   <span className="text-sm">Printers & Toners</span>
                   <FaChevronDown className="text-xs shrink-0" />
                 </button>
-                <div className="absolute left-0 top-full w-[520px] bg-white text-black shadow-2xl rounded-b-md py-6 px-6 hidden group-hover:block z-40">
+                <div className="absolute left-0 top-full w-[520px] bg-white text-black shadow-2xl rounded-b-md py-6 px-6 hidden group-hover:block z-50">
                   <div className="flex gap-6">
                     <div className="w-40 shrink-0">
                       <div className="space-y-1">

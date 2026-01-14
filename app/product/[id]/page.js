@@ -46,6 +46,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [addMessage, setAddMessage] = useState('');
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const { addToCart } = useCart();
   const thumbnailScrollRef = useRef(null);
   const [activeTab, setActiveTab] = useState('description');
@@ -229,6 +230,56 @@ const ProductPage = () => {
           setSelectedSize(displayValue || DEFAULT_DISPLAY_OPTIONS[0]);
           setSelectedStorage(storageValue || DEFAULT_STORAGE_OPTIONS[0]);
         }
+
+        // Fetch related products
+        try {
+          const relatedEndpoint = resolvedType === 'printer' 
+            ? 'https://hitek-server-uu0f.onrender.com/api/printers'
+            : 'https://hitek-server-uu0f.onrender.com/api/laptops';
+          const relatedResponse = await fetch(relatedEndpoint);
+          if (relatedResponse.ok) {
+            const relatedData = await relatedResponse.json();
+            const relatedArray = Array.isArray(relatedData) ? relatedData : [];
+            // Filter out current product and limit to 12
+            const filtered = relatedArray
+              .filter((item) => {
+                const itemId = item.id?.toString() || '';
+                const currentId = normalized.id?.toString() || '';
+                return itemId !== currentId;
+              })
+              .slice(0, 12)
+              .map((item) => {
+                const itemId = item.id?.toString() || '';
+                const itemType = resolvedType;
+                const itemImages = extractImageArray(item, itemType);
+                const itemPlaceholder = itemType === 'printer' ? '/printer-category.png' : '/big-laptop.png';
+                const itemImage = itemImages.length ? itemImages[0] : itemPlaceholder;
+                const itemName = item.name || 
+                  (itemType === 'printer' 
+                    ? [item.brand, item.series].filter(Boolean).join(' ').trim()
+                    : [item.brand, item.model || item.series].filter(Boolean).join(' ').trim()) || 
+                  'Product';
+                const itemPrice = parseNumeric(item.price, 0);
+                const itemDescription = itemType === 'printer'
+                  ? [item.resolution, item.copyfeature, item.scanfeature, item.duplex].filter(Boolean).join(' • ') || ''
+                  : [item.processor, item.memory, item.storage].filter(Boolean).join(' • ') || '';
+                return {
+                  id: itemId,
+                  type: itemType,
+                  name: itemName,
+                  price: itemPrice,
+                  image: itemImage,
+                  description: itemDescription,
+                  brand: item.brand || '',
+                  model: item.model || item.series || '',
+                };
+              });
+            setRelatedProducts(filtered);
+          }
+        } catch (err) {
+          console.error('Error fetching related products:', err);
+          setRelatedProducts([]);
+        }
       } catch (err) {
         console.error('Error fetching product details:', err);
         setError(err.message || 'Failed to load product details.');
@@ -245,6 +296,15 @@ const ProductPage = () => {
     if (!product) return [];
     return extractImageArray(product, product.type || initialType);
   }, [product, initialType]);
+
+  // Distribute related products into 4 columns (3 products per column)
+  const distributedRelatedProducts = useMemo(() => {
+    const columns = [[], [], [], []];
+    relatedProducts.forEach((product, index) => {
+      columns[index % 4].push(product);
+    });
+    return columns;
+  }, [relatedProducts]);
 
   useEffect(() => {
     if (selectedImage > 0 && selectedImage >= images.length) {
@@ -857,130 +917,44 @@ const ProductPage = () => {
 
         {/* Related Products Section */}
         <div className="mt-16 max-w-7xl mx-auto px-4">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">RELATED PRODUCTS</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Column 1 - Related Product */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4">RELATED PRODUCT</h3>
-              <div className="space-y-3">
-                <Link href="/product/hp-elitebook-840" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/laptop-category.jpg" alt="HP Elitebook 840" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">HP Elitebook 840 Core i5</p>
-                    <p className="text-xs text-gray-600 mb-2">16GB RAM 512GB SSD</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 150,000</p>
-                  </div>
-                </Link>
-                <Link href="/product/dell-victus" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/laptop-category.jpg" alt="DELL VICTUS" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">DELL VICTUS Core i7 13th Gen</p>
-                    <p className="text-xs text-gray-600 mb-2">32GB RAM, 1TB SSD</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 200,000</p>
-                  </div>
-                </Link>
-                <Link href="/product/macbook-m3" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/laptop-category.jpg" alt="Macbook M3" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Macbook M3</p>
-                    <p className="text-xs text-gray-600 mb-2">Latest M3 Chip</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 300,000</p>
-                  </div>
-                </Link>
+            {distributedRelatedProducts.map((column, columnIndex) => (
+              <div key={columnIndex} className="space-y-3">
+                {column.map((relatedProduct) => {
+                  const productType = (relatedProduct.type || 'laptop').toLowerCase();
+                  const relatedProductId = relatedProduct.id ? encodeURIComponent(relatedProduct.id) : '';
+                  const relatedProductHref = relatedProductId ? `/product/${relatedProductId}?type=${encodeURIComponent(productType)}` : '#';
+                  return (
+                    <Link 
+                      key={relatedProduct.id} 
+                      href={relatedProductHref}
+                      className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white"
+                    >
+                      <Image 
+                        src={relatedProduct.image || (productType === 'printer' ? '/printer-category.png' : '/laptop-category.jpg')} 
+                        alt={relatedProduct.name} 
+                        width={80} 
+                        height={80} 
+                        className="object-contain" 
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900 mb-1">{relatedProduct.name}</p>
+                        {relatedProduct.description && (
+                          <p className="text-xs text-gray-600 mb-2">{relatedProduct.description}</p>
+                        )}
+                        <p className="text-sm font-bold text-[#00aeef]">
+                          {relatedProduct.price > 0 ? `PKR ${formatPrice(relatedProduct.price)}` : 'Price on request'}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-            </div>
-
-            {/* Column 2 - Product Accessories */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4">PRODUCT ACCESSORIES</h3>
-              <div className="space-y-3">
-                <Link href="/product/logitech-b100" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/mnk-category.png" alt="Logitech B100 Mouse" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Logitech B100 Mouse</p>
-                    <p className="text-xs text-gray-600 mb-2">Wired Mouse</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 1,500</p>
-                  </div>
-                </Link>
-                <Link href="/product/gaming-mouse" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/mnk-category.png" alt="Gaming Mouse" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Gaming Mouse</p>
-                    <p className="text-xs text-gray-600 mb-2">RGB Gaming Mouse</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 10,500</p>
-                  </div>
-                </Link>
-                <Link href="/product/wireless-gaming-mouse" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/mnk-category.png" alt="Wireless Gaming Mouse" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Wireless Gaming Mouse</p>
-                    <p className="text-xs text-gray-600 mb-2">Wireless RGB Mouse</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 25,500</p>
-                  </div>
-                </Link>
-              </div>
-            </div>
-
-            {/* Column 3 - Apple Product */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4">APPLE PRODUCT</h3>
-              <div className="space-y-3">
-                <Link href="/product/macbook-pro-2023" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/big-laptop.png" alt="2023 Macbook Pro" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">2023 Macbook Pro</p>
-                    <p className="text-xs text-gray-600 mb-2">M2 Pro Chip</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 121,500</p>
-                  </div>
-                </Link>
-                <Link href="/product/macbook-air-2020" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/big-laptop.png" alt="2020 Macbook Air" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">2020 Macbook Air</p>
-                    <p className="text-xs text-gray-600 mb-2">M1 Chip</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 121,500</p>
-                  </div>
-                </Link>
-                <Link href="/product/macbook-m3-shadow" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/big-laptop.png" alt="Macbook M3 Shadow Black" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Macbook M3 Shadow Black</p>
-                    <p className="text-xs text-gray-600 mb-2">M3 Chip, Space Black</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 221,500</p>
-                  </div>
-                </Link>
-              </div>
-            </div>
-
-            {/* Column 4 - Featured Products */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4">FEATURED PRODUCTS</h3>
-              <div className="space-y-3">
-                <Link href="/product/lcd-screen-55" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/monitor-category.png" alt="55 Inch LCD Screen" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">55" Wide LCD Screen</p>
-                    <p className="text-xs text-gray-600 mb-2">Smart TV Display</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 165,500</p>
-                  </div>
-                </Link>
-                <Link href="/product/sony-headphones" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/headphone-category.png" alt="Sony Headphones" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Sony DSCHXB Wireless Headphones</p>
-                    <p className="text-xs text-gray-600 mb-2">Wireless Over-Ear</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 60,500</p>
-                  </div>
-                </Link>
-                <Link href="/product/dell-optiplex-i5" className="flex gap-3 p-3 border border-gray-200 rounded-sm hover:shadow-md transition bg-white">
-                  <Image src="/laptop-category.jpg" alt="Dell Optiplex" width={80} height={80} className="object-contain" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Dell Optiplex Core i5 11th Gen</p>
-                    <p className="text-xs text-gray-600 mb-2">16GB 512 GB</p>
-                    <p className="text-sm font-bold text-[#00aeef]">PKR 115,500</p>
-                  </div>
-                </Link>
-              </div>
-            </div>
+            ))}
+            {relatedProducts.length === 0 && (
+              <p className="text-sm text-gray-500 col-span-full">No related products available.</p>
+            )}
           </div>
         </div>
       </main>
