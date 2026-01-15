@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { FaStar, FaShoppingCart, FaFacebook, FaTwitter, FaChevronLeft, FaChevronRight, FaGift, FaTruck, FaHeadset } from 'react-icons/fa';
 import { CiHeart, CiCreditCard1 } from 'react-icons/ci';
 import { FaCopy, FaPinterest } from 'react-icons/fa6';
@@ -24,6 +24,7 @@ const sanitizeSpecValue = (value) => {
 };
 
 const ProductPage = () => {
+  const router = useRouter();
   const params = useParams();
   const productId = params?.id;
   const searchParams = useSearchParams();
@@ -444,6 +445,30 @@ const ProductPage = () => {
     setTimeout(() => setAddMessage(''), 2500);
   };
 
+  const handleBuyNow = () => {
+    if (!product) return;
+    const cartId = product.cartId || (product.type ? `${product.type}-${product.id}` : product.id);
+    const imageSrc =
+      product.image ||
+      (product.type === 'printer' || product.type === 'scanner' ? '/printer-category.png' : '/laptop-category.jpg');
+    addToCart(
+      {
+        id: cartId,
+        productId: product.id,
+        type: product.type,
+        category: product.category,
+        name: product.name,
+        price: product.price,
+        image: imageSrc,
+        brand: product.brand,
+        model: product.model,
+      },
+      quantity,
+    );
+    // Redirect to checkout immediately
+    router.push('/checkout');
+  };
+
 
   const productType = product.type || initialType;
   const specList = (
@@ -737,7 +762,10 @@ const ProductPage = () => {
                 <FaShoppingCart />
                 ADD TO CART
               </button>
-              <button className="flex-1 min-w-[160px] bg-white border-2 border-[#00aeef] text-[#00aeef] hover:bg-[#00aeef] hover:text-white rounded-sm font-bold py-3 transition">
+              <button
+                onClick={handleBuyNow}
+                className="flex-1 min-w-[160px] bg-white border-2 border-[#00aeef] text-[#00aeef] hover:bg-[#00aeef] hover:text-white rounded-sm font-bold py-3 transition"
+              >
                 BUY NOW
               </button>
               {addMessage && (

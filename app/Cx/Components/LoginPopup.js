@@ -160,10 +160,6 @@ const LoginPopup = ({ isOpen, onClose, onMouseEnter, onMouseLeave }) => {
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-    if (!supabase) {
-      setError('Supabase is not configured. Please check your environment variables.');
-      return;
-    }
 
     if (!email) {
       setError('Please enter your email address first');
@@ -174,12 +170,32 @@ const LoginPopup = ({ isOpen, onClose, onMouseEnter, onMouseLeave }) => {
     setError('');
 
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hitek-server-uu0f.onrender.com';
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          redirectTo: `${window.location.origin}/reset-password`,
+        }),
       });
 
-      if (resetError) {
-        setError(resetError.message || 'Failed to send reset email');
+      // Check if response is actually JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        setError('Server returned an invalid response. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to send reset email');
       } else {
         setError('');
         alert('Password reset email sent! Please check your inbox.');
