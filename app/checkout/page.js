@@ -195,6 +195,8 @@ const CheckoutPage = () => {
 
   const handleApplyVoucher = async (e) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event from bubbling to parent form
+    
     if (!voucherCode.trim()) {
       setVoucherError('Please enter a voucher code');
       return;
@@ -866,7 +868,7 @@ const CheckoutPage = () => {
                     Voucher Code
                   </h3>
                   {!voucher ? (
-                    <form onSubmit={handleApplyVoucher} className="space-y-2">
+                    <div className="space-y-2">
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -875,11 +877,18 @@ const CheckoutPage = () => {
                             setVoucherCode(e.target.value.toUpperCase());
                             setVoucherError('');
                           }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleApplyVoucher(e);
+                            }
+                          }}
                           placeholder="Enter voucher code"
                           className="flex-1 rounded-xs border border-gray-200 px-4 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#00aeef] focus:ring-2 focus:ring-[#00aeef]/20"
                         />
                         <button
-                          type="submit"
+                          type="button"
+                          onClick={handleApplyVoucher}
                           disabled={voucherLoading || !voucherCode.trim()}
                           className="px-4 py-2 rounded-xs border border-[#00aeef] bg-[#00aeef] text-white text-sm font-semibold hover:bg-[#0099d9] transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -889,7 +898,7 @@ const CheckoutPage = () => {
                       {voucherError && (
                         <p className="text-xs text-red-600">{voucherError}</p>
                       )}
-                    </form>
+                    </div>
                   ) : (
                     <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xs">
                       <div>
