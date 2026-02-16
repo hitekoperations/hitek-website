@@ -14,6 +14,7 @@ import {
   FiClipboard,
   FiBell,
   FiLogOut,
+  FiTag,
 } from 'react-icons/fi';
 
 const formatNumber = (value) => {
@@ -39,6 +40,7 @@ const navigationItems = [
   { id: 'products', label: 'Products', href: '/cms/products', icon: FiBox, page: 'products' },
   { id: 'orders', label: 'Orders', href: '/cms/orders', icon: FiShoppingCart, page: 'orders' },
   { id: 'inventory', label: 'Inventory', href: '/cms/inventory', icon: FiPackage, page: 'inventory' },
+  { id: 'vouchers', label: 'Vouchers', href: '/cms/vouchers', icon: FiTag, page: 'vouchers' },
   { id: 'customers', label: 'Customers', href: '/cms/customers', icon: FiUsers, page: 'customers' },
   { id: 'settings', label: 'Settings', href: '/cms/settings', icon: FiSettings, page: 'settings' },
 ];
