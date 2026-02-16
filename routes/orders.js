@@ -233,6 +233,8 @@ router.post('/', async (req, res) => {
       lastName,
       phone,
       phoneNumber,
+      voucherCode,
+      voucherId,
     } = req.body;
 
     if (!userId || !items.length) {
@@ -295,6 +297,7 @@ router.post('/', async (req, res) => {
       user_id: userId,
       status: normalizedStatus,
       subtotal: totals.subtotal || 0,
+      discount: totals.discount || 0,
       tax: totals.tax || 0,
       shipping: totals.shipping || 0,
       total: totals.total || 0,
@@ -308,6 +311,14 @@ router.post('/', async (req, res) => {
 
     if (typeof orderNotes === 'string' && orderNotes.trim()) {
       insertPayload.order_notes = orderNotes.trim();
+    }
+
+    // Store voucher information if provided
+    if (voucherCode) {
+      insertPayload.voucher_code = voucherCode;
+    }
+    if (voucherId) {
+      insertPayload.voucher_id = voucherId;
     }
 
     const { data: order, error: orderError } = await supabase
@@ -352,6 +363,24 @@ router.post('/', async (req, res) => {
 
     const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
     if (itemsError) throw itemsError;
+
+    // Update voucher to mark it as availed with order_id if voucher was used
+    if (voucherId && order?.id) {
+      try {
+        await supabase
+          .from('vouchers')
+          .update({
+            is_availed: true,
+            availed_by: userId,
+            availed_at: new Date().toISOString(),
+            order_id: order.id,
+          })
+          .eq('id', voucherId);
+      } catch (voucherUpdateError) {
+        console.error('Failed to update voucher after order creation:', voucherUpdateError);
+        // Don't fail the order if voucher update fails
+      }
+    }
 
     const totalsDelta = {
       totalorders: 1,

@@ -72,6 +72,10 @@ const CheckoutPage = () => {
   const [statusMessage, setStatusMessage] = useState('');
   const [orderPlacing, setOrderPlacing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [voucherCode, setVoucherCode] = useState('');
+  const [voucher, setVoucher] = useState(null);
+  const [voucherError, setVoucherError] = useState('');
+  const [voucherLoading, setVoucherLoading] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -141,7 +145,34 @@ const CheckoutPage = () => {
   }, []);
 
   const taxAmount = useMemo(() => Math.round(cartSubtotal * 0.02), [cartSubtotal]);
-  const total = useMemo(() => cartSubtotal + taxAmount, [cartSubtotal, taxAmount]);
+  
+  // Calculate discount based on voucher
+  const discountAmount = useMemo(() => {
+    if (!voucher) return 0;
+    
+    if (voucher.type === 'price') {
+      // Fixed amount discount (e.g., RS100000)
+      return Math.min(parseFloat(voucher.value) || 0, cartSubtotal);
+    } else if (voucher.type === 'percentage') {
+      // Percentage discount (e.g., 70%)
+      const percentage = parseFloat(voucher.value) || 0;
+      return Math.round((cartSubtotal * percentage) / 100);
+    }
+    
+    return 0;
+  }, [voucher, cartSubtotal]);
+  
+  const subtotalAfterDiscount = useMemo(() => {
+    return Math.max(0, cartSubtotal - discountAmount);
+  }, [cartSubtotal, discountAmount]);
+  
+  const taxAfterDiscount = useMemo(() => {
+    return Math.round(subtotalAfterDiscount * 0.02);
+  }, [subtotalAfterDiscount]);
+  
+  const total = useMemo(() => {
+    return subtotalAfterDiscount + taxAfterDiscount;
+  }, [subtotalAfterDiscount, taxAfterDiscount]);
 
   const handleBillingChange = (field) => (event) => {
     setBillingInfo((prev) => ({ ...prev, [field]: event.target.value }));
@@ -160,6 +191,56 @@ const CheckoutPage = () => {
             : value,
     }));
     setStatusMessage('');
+  };
+
+  const handleApplyVoucher = async (e) => {
+    e.preventDefault();
+    if (!voucherCode.trim()) {
+      setVoucherError('Please enter a voucher code');
+      return;
+    }
+
+    setVoucherLoading(true);
+    setVoucherError('');
+    setVoucher(null);
+
+    try {
+      const response = await fetch(
+        `https://hitek-server-uu0f.onrender.com/api/vouchers/code/${voucherCode.trim().toUpperCase()}`
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Invalid voucher code');
+      }
+
+      const voucherData = await response.json();
+
+      // Check if voucher is already availed
+      if (voucherData.is_availed) {
+        throw new Error('This voucher has already been used');
+      }
+
+      // Check if voucher is expired
+      if (voucherData.expires_at && new Date(voucherData.expires_at) < new Date()) {
+        throw new Error('This voucher has expired');
+      }
+
+      setVoucher(voucherData);
+      setVoucherError('');
+    } catch (error) {
+      console.error('Voucher validation error:', error);
+      setVoucherError(error.message || 'Invalid voucher code');
+      setVoucher(null);
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setVoucher(null);
+    setVoucherCode('');
+    setVoucherError('');
   };
 
   // Helper function to find or create user for guest checkout
@@ -349,7 +430,8 @@ const CheckoutPage = () => {
           status: paymentMethod === 'cod' ? 'pending' : 'in_progress',
           totals: {
             subtotal: cartSubtotal,
-            tax: taxAmount,
+            discount: discountAmount,
+            tax: taxAfterDiscount,
             shipping: 0,
             total,
           },
@@ -357,6 +439,8 @@ const CheckoutPage = () => {
           billingAddress: billingAddressPayload,
           paymentMethod,
           orderNotes,
+          voucherCode: voucher ? voucher.code : null,
+          voucherId: voucher ? voucher.id : null,
           customer: {
             firstName: billingInfo.firstName,
             lastName: billingInfo.lastName,
@@ -776,22 +860,76 @@ const CheckoutPage = () => {
                 </div>
               )}
 
+              <div className="px-6 py-5 border-t border-gray-100">
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-3 uppercase tracking-wide">
+                    Voucher Code
+                  </h3>
+                  {!voucher ? (
+                    <form onSubmit={handleApplyVoucher} className="space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={voucherCode}
+                          onChange={(e) => {
+                            setVoucherCode(e.target.value.toUpperCase());
+                            setVoucherError('');
+                          }}
+                          placeholder="Enter voucher code"
+                          className="flex-1 rounded-xs border border-gray-200 px-4 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#00aeef] focus:ring-2 focus:ring-[#00aeef]/20"
+                        />
+                        <button
+                          type="submit"
+                          disabled={voucherLoading || !voucherCode.trim()}
+                          className="px-4 py-2 rounded-xs border border-[#00aeef] bg-[#00aeef] text-white text-sm font-semibold hover:bg-[#0099d9] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {voucherLoading ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                      {voucherError && (
+                        <p className="text-xs text-red-600">{voucherError}</p>
+                      )}
+                    </form>
+                  ) : (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xs">
+                      <div>
+                        <p className="text-sm font-semibold text-green-800">{voucher.code}</p>
+                        <p className="text-xs text-green-600">
+                          {voucher.type === 'price'
+                            ? `PKR ${parseFloat(voucher.value).toLocaleString('en-PK')} off`
+                            : `${parseFloat(voucher.value)}% off`}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveVoucher}
+                        className="text-green-600 hover:text-green-800 text-sm font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="px-6 py-5 space-y-3 border-t border-gray-100">
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span className="font-medium text-gray-700">Sub-total</span>
                   <span>{formatCurrency(cartSubtotal)}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex items-center justify-between text-sm text-green-600">
+                    <span className="font-medium">Discount</span>
+                    <span>-{formatCurrency(discountAmount)}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span className="font-medium text-gray-700">Shipping</span>
                   <span className="text-green-500 ">Free</span>
                 </div>
                 <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span className="font-medium text-gray-700">Discount</span>
-                  <span>N/A</span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-gray-600">
                   <span className="font-medium text-gray-700">Tax</span>
-                  <span>{formatCurrency(taxAmount)}</span>
+                  <span>{formatCurrency(taxAfterDiscount)}</span>
                 </div>
                 <div className="border-t border-gray-100 pt-4 flex items-center justify-between text-base  text-gray-900">
                   <span>Total</span>
