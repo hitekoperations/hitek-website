@@ -254,7 +254,7 @@ const CartPage = () => {
                 </button>
               </div>
 
-              <div className="border-t border-gray-100 px-6 py-5">
+              {/* <div className="border-t border-gray-100 px-6 py-5">
                 <h3 className="text-sm font-semibold text-gray-800 mb-3 uppercase tracking-wide">
                   Coupon Code
                 </h3>
@@ -273,7 +273,7 @@ const CartPage = () => {
                     APPLY COUPON
                   </button>
                 </form>
-              </div>
+              </div> */}
             </aside>
           </div>
         </div>
