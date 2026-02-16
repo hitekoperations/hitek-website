@@ -9,6 +9,7 @@ const scannerRoutes = require('./routes/scanners');
 const productRoutes = require('./routes/products');
 const cmsAuthRoutes = require('./routes/cmsAuth');
 const activitiesRoutes = require('./routes/activities');
+const vouchersRoutes = require('./routes/vouchers');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -28,6 +29,7 @@ app.use('/api/scanners', scannerRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cms', cmsAuthRoutes);
 app.use('/api/cms/activities', activitiesRoutes);
+app.use('/api/vouchers', vouchersRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
