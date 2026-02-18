@@ -23,10 +23,10 @@ const formatNumber = (value) => {
 };
 
 const fallbackStats = [
-  { label: 'Total Products', value: 42, accent: 'from-[#0ea5e9] to-[#38bdf8]', icon: FiBox },
-  { label: 'Pending Orders', value: 7, accent: 'from-[#f97316] to-[#fb7185]', icon: FiClipboard },
-  { label: 'Fulfilled Orders', value: 128, accent: 'from-[#22c55e] to-[#10b981]', icon: FiTrendingUp },
-  { label: 'Users Online', value: 5, accent: 'from-[#a855f7] to-[#6366f1]', icon: FiUsers },
+  { label: 'Total Products', value: 0, accent: 'from-[#0ea5e9] to-[#38bdf8]', icon: FiBox },
+  { label: 'Pending Orders', value: 0, accent: 'from-[#f97316] to-[#fb7185]', icon: FiClipboard },
+  { label: 'Fulfilled Orders', value: 0, accent: 'from-[#22c55e] to-[#10b981]', icon: FiTrendingUp },
+  { label: 'Total Customers', value: 0, accent: 'from-[#a855f7] to-[#6366f1]', icon: FiUsers },
 ];
 
 const fallbackActivities = [
@@ -86,6 +86,7 @@ const CmsDashboardPage = () => {
   const [stats, setStats] = useState(fallbackStats);
   const [activities, setActivities] = useState(fallbackActivities);
   const [activeItem, setActiveItem] = useState('overview');
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     try {
@@ -112,7 +113,8 @@ const CmsDashboardPage = () => {
       
       setCmsUser(parsedUser);
 
-      // Fetch real activities from API
+      // Fetch real data from API
+      fetchStats();
       fetchActivities();
 
     } catch (error) {
@@ -120,6 +122,73 @@ const CmsDashboardPage = () => {
       router.replace('/cms/auth/login');
     }
   }, [router]);
+
+  const fetchStats = async () => {
+    try {
+      setStatsLoading(true);
+      
+      // Fetch products count (laptops + printers + scanners)
+      const [laptopsRes, printersRes, scannersRes, ordersRes, usersRes] = await Promise.all([
+        fetch('https://hitek-server-uu0f.onrender.com/api/laptops'),
+        fetch('https://hitek-server-uu0f.onrender.com/api/printers'),
+        fetch('https://hitek-server-uu0f.onrender.com/api/scanners'),
+        fetch('https://hitek-server-uu0f.onrender.com/api/orders'),
+        fetch('https://hitek-server-uu0f.onrender.com/api/users'),
+      ]);
+
+      let totalProducts = 0;
+      let pendingOrders = 0;
+      let fulfilledOrders = 0;
+      let totalCustomers = 0;
+
+      // Count products
+      if (laptopsRes.ok) {
+        const laptops = await laptopsRes.json();
+        totalProducts += Array.isArray(laptops) ? laptops.length : 0;
+      }
+      if (printersRes.ok) {
+        const printers = await printersRes.json();
+        totalProducts += Array.isArray(printers) ? printers.length : 0;
+      }
+      if (scannersRes.ok) {
+        const scanners = await scannersRes.json();
+        totalProducts += Array.isArray(scanners) ? scanners.length : 0;
+      }
+
+      // Count orders
+      if (ordersRes.ok) {
+        const orders = await ordersRes.json();
+        if (Array.isArray(orders)) {
+          orders.forEach((order) => {
+            const status = (order.status || '').toLowerCase();
+            if (status === 'pending' || status === 'processing') {
+              pendingOrders++;
+            } else if (status === 'completed' || status === 'fulfilled') {
+              fulfilledOrders++;
+            }
+          });
+        }
+      }
+
+      // Count customers
+      if (usersRes.ok) {
+        const users = await usersRes.json();
+        totalCustomers = Array.isArray(users) ? users.length : 0;
+      }
+
+      setStats([
+        { label: 'Total Products', value: totalProducts, accent: 'from-[#0ea5e9] to-[#38bdf8]', icon: FiBox },
+        { label: 'Pending Orders', value: pendingOrders, accent: 'from-[#f97316] to-[#fb7185]', icon: FiClipboard },
+        { label: 'Fulfilled Orders', value: fulfilledOrders, accent: 'from-[#22c55e] to-[#10b981]', icon: FiTrendingUp },
+        { label: 'Total Customers', value: totalCustomers, accent: 'from-[#a855f7] to-[#6366f1]', icon: FiUsers },
+      ]);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+      // Keep fallback stats on error
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   const fetchActivities = async () => {
     try {
@@ -291,7 +360,9 @@ const CmsDashboardPage = () => {
                     <div className="relative flex items-start justify-between">
                       <div>
                         <p className="text-xs uppercase tracking-wide text-white/80">{stat.label}</p>
-                        <p className="mt-3 text-3xl font-bold text-white">{formatNumber(stat.value)}</p>
+                        <p className="mt-3 text-3xl font-bold text-white">
+                          {statsLoading ? '...' : formatNumber(stat.value)}
+                        </p>
                       </div>
                       <span className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
                         <Icon className="text-xl text-white" />
